@@ -1,0 +1,154 @@
+package com.kanva.controller.task;
+
+import com.kanva.common.response.ApiResponse;
+import com.kanva.dto.task.TaskPositionUpdateRequest;
+import com.kanva.dto.task.TaskRequest;
+import com.kanva.dto.task.TaskResponse;
+import com.kanva.dto.task.TaskStatusUpdateRequest;
+import com.kanva.service.TaskService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/tasks")
+@RequiredArgsConstructor
+public class TaskController {
+
+    private final TaskService taskService;
+
+    /**
+     * 특정 날짜의 Task 목록 조회
+     * GET /api/tasks?date=2025-01-18
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> getTasksByDate(
+            @RequestParam LocalDate date) {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        List<TaskResponse> response = taskService.getTasksByDate(userId, date);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * Task 단건 조회
+     * GET /api/tasks/{taskId}
+     */
+    @GetMapping("/{taskId}")
+    public ResponseEntity<ApiResponse<TaskResponse>> getTask(
+            @PathVariable Long taskId) {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        TaskResponse response = taskService.getTask(userId, taskId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * Task 생성
+     * POST /api/tasks?date=2025-01-18
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<TaskResponse>> createTask(
+            @RequestParam LocalDate date,
+            @Valid @RequestBody TaskRequest request) {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        TaskResponse response = taskService.createTask(userId, date, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created(response));
+    }
+
+    /**
+     * Task 수정
+     * PUT /api/tasks/{taskId}
+     */
+    @PutMapping("/{taskId}")
+    public ResponseEntity<ApiResponse<TaskResponse>> updateTask(
+            @PathVariable Long taskId,
+            @Valid @RequestBody TaskRequest request) {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        TaskResponse response = taskService.updateTask(userId, taskId, request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * Task 상태 변경
+     * PATCH /api/tasks/{taskId}/status
+     */
+    @PatchMapping("/{taskId}/status")
+    public ResponseEntity<ApiResponse<TaskResponse>> updateTaskStatus(
+            @PathVariable Long taskId,
+            @Valid @RequestBody TaskStatusUpdateRequest request) {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        TaskResponse response = taskService.updateTaskStatus(userId, taskId, request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * Task 완료 상태 토글 (COMPLETED <-> PENDING)
+     * PATCH /api/tasks/{taskId}/toggle
+     */
+    @PatchMapping("/{taskId}/toggle")
+    public ResponseEntity<ApiResponse<TaskResponse>> toggleTask(
+            @PathVariable Long taskId) {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        TaskResponse response = taskService.toggleTask(userId, taskId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * Task 삭제
+     * DELETE /api/tasks/{taskId}
+     */
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<ApiResponse<Void>> deleteTask(
+            @PathVariable Long taskId) {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        taskService.deleteTask(userId, taskId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    /**
+     * Task 순서 변경 (드래그앤드롭)
+     * PUT /api/tasks/positions?date=2025-01-18
+     */
+    @PutMapping("/positions")
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> updateTaskPositions(
+            @RequestParam LocalDate date,
+            @Valid @RequestBody TaskPositionUpdateRequest request) {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        List<TaskResponse> response = taskService.updateTaskPositions(userId, date, request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * 마감 지난 Task 목록 조회
+     * GET /api/tasks/overdue
+     */
+    @GetMapping("/overdue")
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> getOverdueTasks() {
+        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
+        Long userId = 1L;
+
+        List<TaskResponse> response = taskService.getOverdueTasks(userId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+}
