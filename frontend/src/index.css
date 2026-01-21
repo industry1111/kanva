@@ -1,0 +1,252 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #1f2937;
+  background-color: #f3f4f6;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+}
+
+/* DailyWorkspacePage 스타일 */
+.workspace-container {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding: 24px;
+  max-width: 1024px;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+/* 헤더 */
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+/* 로고 */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background-color: #6366f1;
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* 날짜 네비게이션 */
+.date-nav {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.date-nav-wrapper {
+  width: 100%;
+}
+
+.date-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.week-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.date-nav-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-btn {
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.nav-btn:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.today-btn {
+  background-color: #6366f1;
+  border-color: #6366f1;
+  color: white;
+}
+
+.today-btn:hover {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.date-picker {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.date-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.date-item:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.date-item.selected {
+  background-color: #6366f1;
+  border-color: #6366f1;
+  color: white;
+}
+
+.date-item.today:not(.selected) {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.date-weekday {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.date-day {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* 메인 컨텐츠 */
+.workspace-main {
+  display: flex;
+  gap: 24px;
+  min-height: calc(100vh - 260px);
+}
+
+.workspace-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* 모바일 반응형 (768px 이하) */
+@media (max-width: 768px) {
+  .workspace-container {
+    padding: 16px;
+    box-shadow: none;
+  }
+
+  .date-nav-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .date-picker {
+    gap: 4px;
+  }
+
+  .date-item {
+    height: 58px;
+  }
+
+  .date-day {
+    font-size: 16px;
+  }
+
+  .date-weekday {
+    font-size: 10px;
+  }
+
+  .workspace-main {
+    flex-direction: column;
+    gap: 20px;
+    min-height: auto;
+  }
+
+  .workspace-column {
+    min-height: 300px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+  }
+
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Input focus styles */
+input:focus {
+  border-color: #6366f1;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Button hover effects */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
