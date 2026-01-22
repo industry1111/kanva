@@ -61,7 +61,6 @@ class TaskControllerTest {
                 .dailyNoteId(1L)
                 .title(title)
                 .description("설명")
-                .dueDate(LocalDate.of(2025, 1, 20))
                 .status(status)
                 .position(position)
                 .overdue(false)
@@ -141,7 +140,6 @@ class TaskControllerTest {
             TaskRequest request = TaskRequest.builder()
                     .title("새 작업")
                     .description("설명")
-                    .dueDate(LocalDate.of(2025, 1, 20))
                     .status(TaskStatus.PENDING)
                     .build();
 
@@ -191,7 +189,6 @@ class TaskControllerTest {
             TaskRequest request = TaskRequest.builder()
                     .title("수정된 작업")
                     .description("수정된 설명")
-                    .dueDate(LocalDate.of(2025, 1, 25))
                     .status(TaskStatus.IN_PROGRESS)
                     .build();
 
@@ -200,7 +197,6 @@ class TaskControllerTest {
                     .dailyNoteId(1L)
                     .title("수정된 작업")
                     .description("수정된 설명")
-                    .dueDate(LocalDate.of(2025, 1, 25))
                     .status(TaskStatus.IN_PROGRESS)
                     .position(0)
                     .overdue(false)
@@ -358,7 +354,6 @@ class TaskControllerTest {
                     .id(1L)
                     .dailyNoteId(1L)
                     .title("마감 지난 작업")
-                    .dueDate(LocalDate.now().minusDays(1))
                     .status(TaskStatus.PENDING)
                     .position(0)
                     .overdue(true)
