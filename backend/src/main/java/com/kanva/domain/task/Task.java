@@ -142,4 +142,12 @@ public class Task extends BaseEntity {
     public Long getSeriesId() {
         return this.series != null ? this.series.getId() : null;
     }
+
+    /**
+     * 기존 Task를 시리즈에 연결
+     */
+    public void assignToSeries(TaskSeries series) {
+        this.series = series;
+        this.taskDate = this.dailyNote.getDate();
+    }
 }
