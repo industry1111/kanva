@@ -12,6 +12,7 @@ public enum ErrorCode {
     MISSING_PARAMETER(400, "필수 파라미터가 누락되었습니다."),
     INVALID_PARAMETER_TYPE(400, "파라미터 형식이 올바르지 않습니다."),
     INVALID_REQUEST_BODY(400, "요청 본문을 읽을 수 없습니다."),
+    TASK_STATUS_CHANGE_NOT_ALLOWED(400, "미래 날짜의 Task는 상태를 변경할 수 없습니다."),
 
     // 401 Unauthorized
     UNAUTHORIZED(401, "인증이 필요합니다."),

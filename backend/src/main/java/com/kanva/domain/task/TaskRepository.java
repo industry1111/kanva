@@ -2,6 +2,7 @@ package com.kanva.domain.task;
 
 import com.kanva.domain.dailynote.DailyNote;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -44,6 +45,18 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT t FROM Task t JOIN FETCH t.dailyNote d WHERE d.user.id = :userId AND t.dueDate BETWEEN :startDate AND :endDate AND t.status != 'COMPLETED' ORDER BY t.dueDate ASC")
     List<Task> findDueSoonTasks(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // TaskSeries: 해당 시리즈의 해당 날짜 인스턴스 존재 여부 확인 (멱등성 보장)
-    boolean existsBySeriesIdAndTaskDate(Long seriesId, LocalDate taskDate);
+    // TaskSeries: 해당 시리즈의 해당 날짜 인스턴스 존재 여부 확인
+    boolean existsBySeries_IdAndTaskDate(Long seriesId, LocalDate taskDate);
+
+    /**
+     * 시리즈의 특정 날짜 이후 인스턴스 일괄 삭제
+     * COMPLETE_STOPS_SERIES 정책에서 완료 시 미래 인스턴스 정리용
+     *
+     * @param seriesId 시리즈 ID
+     * @param cutoffDate 기준 날짜 (이 날짜 초과인 인스턴스 삭제)
+     * @return 삭제된 행 수
+     */
+    @Modifying
+    @Query("DELETE FROM Task t WHERE t.series.id = :seriesId AND t.taskDate > :cutoffDate")
+    int deleteBySeries_IdAndTaskDateAfter(@Param("seriesId") Long seriesId, @Param("cutoffDate") LocalDate cutoffDate);
 }
