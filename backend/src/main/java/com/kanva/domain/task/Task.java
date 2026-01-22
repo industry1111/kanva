@@ -2,6 +2,7 @@ package com.kanva.domain.task;
 
 import com.kanva.domain.BaseEntity;
 import com.kanva.domain.dailynote.DailyNote;
+import com.kanva.domain.taskseries.TaskSeries;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -12,7 +13,11 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "tasks",
-        indexes = @Index(name = "idx_daily_note_position", columnList = "daily_note_id, position")
+        indexes = @Index(name = "idx_daily_note_position", columnList = "daily_note_id, position"),
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_task_series_date",
+                columnNames = {"series_id", "task_date"}
+        )
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,6 +30,13 @@ public class Task extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "daily_note_id", nullable = false)
     private DailyNote dailyNote;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "series_id")
+    private TaskSeries series;
+
+    @Column(name = "task_date")
+    private LocalDate taskDate;
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -42,8 +54,10 @@ public class Task extends BaseEntity {
     private Integer position;
 
     @Builder
-    public Task(DailyNote dailyNote, String title, String description, LocalDate dueDate, TaskStatus status, Integer position) {
+    public Task(DailyNote dailyNote, TaskSeries series, String title, String description, LocalDate dueDate, TaskStatus status, Integer position) {
         this.dailyNote = dailyNote;
+        this.series = series;
+        this.taskDate = (series != null) ? dailyNote.getDate() : null;
         this.title = title;
         this.description = description;
         this.dueDate = dueDate;
@@ -119,5 +133,13 @@ public class Task extends BaseEntity {
         return this.dueDate != null
                 && LocalDate.now().isAfter(this.dueDate)
                 && !isCompleted();
+    }
+
+    public boolean isSeriesTask() {
+        return this.series != null;
+    }
+
+    public Long getSeriesId() {
+        return this.series != null ? this.series.getId() : null;
     }
 }
