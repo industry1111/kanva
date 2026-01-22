@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew compileJava:*)",
+      "Bash(./gradlew test:*)",
+      "Bash(tree:*)",
+      "Bash(git checkout:*)",
+      "Bash(git reset:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nrefactor: 프로젝트 구조 변경 \\(backend/frontend 분리\\)\n\n- src/ 폴더를 backend/src/로 이동\n- Gradle 멀티 모듈 프로젝트 구조로 변경\n- User, DailyNote, Task 엔티티 및 전체 백엔드 코드 포함\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git remote prune:*)"
+    ]
+  }
+}
