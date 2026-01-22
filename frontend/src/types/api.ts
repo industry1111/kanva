@@ -91,3 +91,32 @@ export interface DailyNoteSummary {
   date: string;
   hasContent: boolean;
 }
+
+// Dashboard types
+export interface DashboardResponse {
+  stats: DashboardStats;
+  dailyStats: DailyStat[];
+  overdueTasks: TaskSummary[];
+  dueSoonTasks: TaskSummary[];
+}
+
+export interface DashboardStats {
+  completed: number;
+  inProgress: number;
+  pending: number;
+  overdue: number;
+}
+
+export interface DailyStat {
+  date: string;
+  totalCount: number;
+  completedCount: number;
+}
+
+export interface TaskSummary {
+  id: number;
+  title: string;
+  date: string;
+  dueDate: string | null;
+  status: string;
+}
