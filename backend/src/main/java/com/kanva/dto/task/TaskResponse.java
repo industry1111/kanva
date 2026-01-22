@@ -14,6 +14,7 @@ public class TaskResponse {
 
     private Long id;
     private Long dailyNoteId;
+    private Long seriesId;
     private String title;
     private String description;
     private LocalDate dueDate;
@@ -27,6 +28,7 @@ public class TaskResponse {
         return TaskResponse.builder()
                 .id(task.getId())
                 .dailyNoteId(task.getDailyNote().getId())
+                .seriesId(task.getSeriesId())
                 .title(task.getTitle())
                 .description(task.getDescription())
                 .dueDate(task.getDueDate())

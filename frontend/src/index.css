@@ -250,3 +250,430 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ==================== Dashboard Styles ==================== */
+
+.dashboard-container {
+  min-height: 100vh;
+  background-color: #f3f4f6;
+  padding: 24px;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.dashboard-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-user-name {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.dashboard-logout-btn {
+  padding: 8px 16px;
+  background-color: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dashboard-logout-btn:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.dashboard-main {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.dashboard-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.dashboard-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 16px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Month Selector */
+.month-selector {
+  display: flex;
+  flex-direction: column;
+}
+
+.month-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.month-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.month-item:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.month-item.selected {
+  background-color: #6366f1;
+  border-color: #6366f1;
+  color: #ffffff;
+}
+
+.month-item.current:not(.selected) {
+  border-color: #6366f1;
+}
+
+.month-year {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.month-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Task Stats Bar Chart */
+.stats-chart {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 32px;
+  height: 150px;
+  padding-top: 20px;
+}
+
+.stats-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 60px;
+}
+
+.stats-bar {
+  width: 40px;
+  min-height: 4px;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+.stats-bar-completed {
+  background-color: #6366f1;
+}
+
+.stats-bar-pending {
+  background-color: #e5e7eb;
+}
+
+.stats-bar-progress {
+  background-color: #fbbf24;
+}
+
+.stats-bar-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-top: 8px;
+}
+
+.stats-bar-label {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* Productivity Chart - Bar Style */
+.productivity-card {
+  min-width: 0;
+}
+
+.productivity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.productivity-header .dashboard-card-title {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.productivity-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.productivity-nav-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #6b7280;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.productivity-nav-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.productivity-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.productivity-chart-bar {
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-bars-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  height: 160px;
+  padding: 24px 4px 0 4px;
+}
+
+.chart-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 36px;
+}
+
+.chart-bar-group.today {
+  background-color: #f0f9ff;
+  border-radius: 6px;
+  margin: -4px;
+  padding: 4px;
+}
+
+.chart-bar-wrapper {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 100px;
+  width: 100%;
+  justify-content: center;
+}
+
+.chart-bar {
+  width: 14px;
+  min-height: 4px;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease;
+  position: relative;
+}
+
+.chart-bar-total {
+  background-color: #e5e7eb;
+}
+
+.chart-bar-completed {
+  background-color: #6366f1;
+}
+
+.bar-value {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.chart-bar-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.chart-bar-day {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.chart-bar-group.today .chart-bar-day {
+  color: #6366f1;
+}
+
+.chart-bar-weekday {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-total {
+  background-color: #e5e7eb;
+}
+
+.legend-completed {
+  background-color: #6366f1;
+}
+
+.legend-text {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Dashboard Loading */
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16px;
+  color: #6b7280;
+}
+
+.dashboard-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Dashboard Data Loading (Async) */
+.dashboard-grid.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.dashboard-data-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}
+
+.dashboard-spinner-small {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Dashboard Responsive */
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .dashboard-title {
+    order: -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-container {
+    padding: 16px;
+  }
+
+  .dashboard-card {
+    padding: 16px;
+  }
+
+  .stats-chart {
+    gap: 20px;
+  }
+}

@@ -4,6 +4,8 @@ import com.kanva.domain.dailynote.DailyNote;
 import com.kanva.domain.dailynote.DailyNoteRepository;
 import com.kanva.domain.task.Task;
 import com.kanva.domain.task.TaskRepository;
+import com.kanva.domain.task.TaskStatus;
+import com.kanva.domain.taskseries.TaskSeries;
 import com.kanva.domain.user.User;
 import com.kanva.domain.user.UserRepository;
 import com.kanva.dto.task.TaskPositionUpdateRequest;
@@ -14,6 +16,7 @@ import com.kanva.exception.TaskNotFoundException;
 import com.kanva.exception.UserNotFoundException;
 import com.kanva.service.TaskService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,7 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
+@Slf4j
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
@@ -75,7 +79,13 @@ public class TaskServiceImpl implements TaskService {
         task.updateDueDate(request.getDueDate());
 
         if (request.getStatus() != null) {
+            TaskStatus oldStatus = task.getStatus();
             task.updateStatus(request.getStatus());
+
+            // 시리즈 Task가 COMPLETED로 변경되면 시리즈 중단
+            if (request.getStatus() == TaskStatus.COMPLETED && oldStatus != TaskStatus.COMPLETED) {
+                handleSeriesCompletion(task);
+            }
         }
 
         return TaskResponse.from(task);
@@ -85,7 +95,15 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public TaskResponse updateTaskStatus(Long userId, Long taskId, TaskStatusUpdateRequest request) {
         Task task = findTaskByIdAndUserId(taskId, userId);
+        TaskStatus oldStatus = task.getStatus();
+
         task.updateStatus(request.getStatus());
+
+        // 시리즈 Task가 COMPLETED로 변경되면 시리즈 중단
+        if (request.getStatus() == TaskStatus.COMPLETED && oldStatus != TaskStatus.COMPLETED) {
+            handleSeriesCompletion(task);
+        }
+
         return TaskResponse.from(task);
     }
 
@@ -93,7 +111,15 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public TaskResponse toggleTask(Long userId, Long taskId) {
         Task task = findTaskByIdAndUserId(taskId, userId);
+        boolean wasCompleted = task.isCompleted();
+
         task.toggle();
+
+        // 시리즈 Task가 COMPLETED로 토글되면 시리즈 중단
+        if (!wasCompleted && task.isCompleted()) {
+            handleSeriesCompletion(task);
+        }
+
         return TaskResponse.from(task);
     }
 
@@ -126,6 +152,23 @@ public class TaskServiceImpl implements TaskService {
                 .stream()
                 .map(TaskResponse::from)
                 .toList();
+    }
+
+    /**
+     * 시리즈 Task 완료 시 시리즈 중단 처리
+     */
+    private void handleSeriesCompletion(Task task) {
+        if (!task.isSeriesTask()) {
+            return;
+        }
+
+        TaskSeries series = task.getSeries();
+        if (series != null && series.isActive()) {
+            LocalDate taskDate = task.getDailyNote().getDate();
+            series.stop(taskDate);
+            log.info("Series {} stopped due to task {} completion on date {}",
+                    series.getId(), task.getId(), taskDate);
+        }
     }
 
     private User findUserById(Long userId) {
