@@ -1,3 +1,0 @@
-rootProject.name = 'kanva'
-
-include 'backend'

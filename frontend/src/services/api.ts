@@ -11,6 +11,7 @@ import type {
   DailyNote,
   DailyNoteRequest,
   DailyNoteSummary,
+  DashboardResponse,
 } from '../types/api';
 
 const API_BASE_URL = 'http://localhost:8080/api';
@@ -168,5 +169,12 @@ export const taskApi = {
 
   getOverdue: async (): Promise<ApiResponse<Task[]>> => {
     return fetchWithAuth('/tasks/overdue');
+  },
+};
+
+// Dashboard API
+export const dashboardApi = {
+  get: async (month: string): Promise<ApiResponse<DashboardResponse>> => {
+    return fetchWithAuth(`/dashboard?month=${month}`);
   },
 };

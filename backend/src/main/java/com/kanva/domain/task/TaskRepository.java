@@ -35,4 +35,15 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT MAX(t.position) FROM Task t WHERE t.dailyNote.id = :dailyNoteId")
     Integer findMaxPositionByDailyNoteId(@Param("dailyNoteId") Long dailyNoteId);
+
+    // Dashboard: 월 범위 조회
+    @Query("SELECT t FROM Task t JOIN FETCH t.dailyNote d WHERE d.user.id = :userId AND d.date BETWEEN :startDate AND :endDate ORDER BY d.date ASC, t.position ASC")
+    List<Task> findByUserIdAndDateRange(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    // Dashboard: 마감 임박 (today ~ today+7, not completed)
+    @Query("SELECT t FROM Task t JOIN FETCH t.dailyNote d WHERE d.user.id = :userId AND t.dueDate BETWEEN :startDate AND :endDate AND t.status != 'COMPLETED' ORDER BY t.dueDate ASC")
+    List<Task> findDueSoonTasks(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    // TaskSeries: 해당 시리즈의 해당 날짜 인스턴스 존재 여부 확인 (멱등성 보장)
+    boolean existsBySeriesIdAndTaskDate(Long seriesId, LocalDate taskDate);
 }
