@@ -1,7 +1,7 @@
 package com.kanva.dto.taskseries;
 
+import com.kanva.domain.taskseries.CompletionPolicy;
 import com.kanva.domain.taskseries.TaskSeries;
-import com.kanva.domain.taskseries.TaskSeriesStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,8 +17,10 @@ public class TaskSeriesResponse {
     private String description;
     private LocalDate startDate;
     private LocalDate endDate;
-    private TaskSeriesStatus status;
+    private CompletionPolicy completionPolicy;
+    private boolean stopOnComplete;
     private LocalDate stopDate;
+    private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -29,8 +31,10 @@ public class TaskSeriesResponse {
                 .description(series.getDescription())
                 .startDate(series.getStartDate())
                 .endDate(series.getEndDate())
-                .status(series.getStatus())
+                .completionPolicy(series.getCompletionPolicy())
+                .stopOnComplete(series.getCompletionPolicy() == CompletionPolicy.COMPLETE_STOPS_SERIES)
                 .stopDate(series.getStopDate())
+                .active(series.isActive())
                 .createdAt(series.getCreatedAt())
                 .updatedAt(series.getUpdatedAt())
                 .build();
