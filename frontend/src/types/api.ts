@@ -47,12 +47,15 @@ export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 export interface Task {
   id: number;
   dailyNoteId: number;
+  seriesId?: number;
   title: string;
   description?: string;
-  dueDate?: string;
   status: TaskStatus;
   position: number;
   overdue: boolean;
+  repeatDaily: boolean;
+  stopOnComplete: boolean;
+  endDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -60,9 +63,11 @@ export interface Task {
 export interface TaskRequest {
   title: string;
   description?: string;
-  dueDate?: string;
   status?: TaskStatus;
   position?: number;
+  repeatDaily?: boolean;
+  stopOnComplete?: boolean;
+  endDate?: string;
 }
 
 export interface TaskStatusUpdateRequest {
