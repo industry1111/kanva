@@ -48,6 +48,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ErrorCode.DUPLICATE_EMAIL, e.getMessage()));
     }
 
+    @ExceptionHandler(TaskStatusChangeNotAllowedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTaskStatusChangeNotAllowedException(TaskStatusChangeNotAllowedException e) {
+        log.warn("TaskStatusChangeNotAllowedException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(ErrorCode.TASK_STATUS_CHANGE_NOT_ALLOWED, e.getMessage()));
+    }
+
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<ApiResponse<Void>> handleInvalidPasswordException(InvalidPasswordException e) {
         log.error("InvalidPasswordException: {}", e.getMessage());
