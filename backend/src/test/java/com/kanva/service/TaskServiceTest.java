@@ -1,5 +1,6 @@
 package com.kanva.service;
 
+import com.kanva.config.ClockConfig;
 import com.kanva.domain.dailynote.DailyNote;
 import com.kanva.domain.dailynote.DailyNoteRepository;
 import com.kanva.domain.task.Task;
@@ -20,13 +21,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,7 +52,11 @@ class TaskServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
+    @Mock
+    private TaskSeriesService taskSeriesService;
+
+    private Clock clock;
+
     private TaskServiceImpl taskService;
 
     private Long userId;
@@ -59,9 +66,16 @@ class TaskServiceTest {
 
     @BeforeEach
     void setUp() {
+        today = LocalDate.of(2025, 1, 18);
+        // 고정된 시간으로 Clock 설정 (2025-01-18 12:00:00 KST)
+        clock = Clock.fixed(
+                today.atTime(12, 0).atZone(ClockConfig.SEOUL_ZONE).toInstant(),
+                ClockConfig.SEOUL_ZONE
+        );
+        taskService = new TaskServiceImpl(taskRepository, dailyNoteRepository, userRepository, taskSeriesService, clock);
+
         userId = 1L;
         user = createUser(userId, "test@example.com", "테스트유저");
-        today = LocalDate.of(2025, 1, 18);
         dailyNote = createDailyNote(1L, user, today);
     }
 
@@ -184,7 +198,6 @@ class TaskServiceTest {
             TaskRequest request = TaskRequest.builder()
                     .title("새 작업")
                     .description("설명")
-                    .dueDate(LocalDate.of(2025, 1, 20))
                     .status(TaskStatus.PENDING)
                     .build();
 
@@ -272,7 +285,6 @@ class TaskServiceTest {
             TaskRequest request = TaskRequest.builder()
                     .title("수정된 제목")
                     .description("수정된 설명")
-                    .dueDate(LocalDate.of(2025, 1, 25))
                     .status(TaskStatus.IN_PROGRESS)
                     .build();
 
@@ -284,7 +296,6 @@ class TaskServiceTest {
             // then
             assertThat(response.getTitle()).isEqualTo("수정된 제목");
             assertThat(response.getDescription()).isEqualTo("수정된 설명");
-            assertThat(response.getDueDate()).isEqualTo(LocalDate.of(2025, 1, 25));
             assertThat(response.getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
         }
     }
@@ -374,9 +385,9 @@ class TaskServiceTest {
         void success() {
             // given
             Task overdueTask = createTask(1L, dailyNote, "마감 지난 작업", TaskStatus.PENDING, 0);
-            ReflectionTestUtils.setField(overdueTask, "dueDate", LocalDate.now().minusDays(1));
+            ReflectionTestUtils.setField(overdueTask, "dueDate", today.minusDays(1));
 
-            given(taskRepository.findOverdueTasks(userId, LocalDate.now()))
+            given(taskRepository.findOverdueTasks(userId, today))
                     .willReturn(List.of(overdueTask));
 
             // when
