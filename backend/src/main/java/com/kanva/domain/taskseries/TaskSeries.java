@@ -110,6 +110,15 @@ public class TaskSeries extends BaseEntity {
     }
 
     /**
+     * 사용자 요청에 의한 시리즈 중단 (정책 무관)
+     * stopDate를 date-1로 설정하여 해당 날짜부터 생성 차단
+     * (canGenerateFor는 date.isAfter(stopDate)로 체크하므로)
+     */
+    public void forceStop(LocalDate date) {
+        this.stopDate = date.minusDays(1);
+    }
+
+    /**
      * 특정 날짜에 Task 인스턴스 생성 가능 여부 확인
      *
      * 조건:
@@ -122,11 +131,9 @@ public class TaskSeries extends BaseEntity {
             return false;
         }
 
-        // COMPLETE_STOPS_SERIES인 경우에만 stopDate 체크
-        if (completionPolicy == CompletionPolicy.COMPLETE_STOPS_SERIES) {
-            if (stopDate != null && date.isAfter(stopDate)) {
-                return false;
-            }
+        // stopDate가 설정되어 있으면 체크 (forceStop 또는 COMPLETE_STOPS_SERIES)
+        if (stopDate != null && date.isAfter(stopDate)) {
+            return false;
         }
 
         return true;
