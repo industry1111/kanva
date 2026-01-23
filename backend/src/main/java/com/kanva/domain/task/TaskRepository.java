@@ -45,8 +45,16 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT t FROM Task t JOIN FETCH t.dailyNote d WHERE d.user.id = :userId AND t.dueDate BETWEEN :startDate AND :endDate AND t.status != 'COMPLETED' ORDER BY t.dueDate ASC")
     List<Task> findDueSoonTasks(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
+    // TaskSeries: 해당 시리즈에 속한 Task 수
+    long countBySeries_Id(Long seriesId);
+
     // TaskSeries: 해당 시리즈의 해당 날짜 인스턴스 존재 여부 확인
     boolean existsBySeries_IdAndTaskDate(Long seriesId, LocalDate taskDate);
+
+    // TaskSeries: 해당 시리즈의 해당 날짜 인스턴스 삭제
+    @Modifying
+    @Query("DELETE FROM Task t WHERE t.series.id = :seriesId AND t.taskDate = :taskDate")
+    int deleteBySeries_IdAndTaskDate(@Param("seriesId") Long seriesId, @Param("taskDate") LocalDate taskDate);
 
     /**
      * 시리즈의 특정 날짜 이후 인스턴스 일괄 삭제
