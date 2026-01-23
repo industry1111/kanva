@@ -162,7 +162,14 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public void deleteTask(Long userId, Long taskId) {
         Task task = findTaskByIdAndUserId(taskId, userId);
+        Long seriesId = task.getSeriesId();
         taskRepository.delete(task);
+
+        // 시리즈 Task인 경우 자동 정리 확인
+        if (seriesId != null) {
+            taskRepository.flush();
+            taskSeriesService.cleanupIfEligible(seriesId);
+        }
     }
 
     @Override

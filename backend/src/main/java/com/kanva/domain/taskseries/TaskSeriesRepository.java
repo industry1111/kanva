@@ -21,10 +21,7 @@ public interface TaskSeriesRepository extends JpaRepository<TaskSeries, Long> {
             SELECT ts FROM TaskSeries ts
             WHERE ts.startDate <= :date
             AND ts.endDate >= :date
-            AND (
-                ts.completionPolicy = com.kanva.domain.taskseries.CompletionPolicy.PER_OCCURRENCE
-                OR (ts.completionPolicy = com.kanva.domain.taskseries.CompletionPolicy.COMPLETE_STOPS_SERIES AND (ts.stopDate IS NULL OR ts.stopDate >= :date))
-            )
+            AND (ts.stopDate IS NULL OR ts.stopDate >= :date)
             """)
     List<TaskSeries> findGeneratableSeriesForDate(@Param("date") LocalDate date);
 
@@ -36,10 +33,7 @@ public interface TaskSeriesRepository extends JpaRepository<TaskSeries, Long> {
             WHERE ts.user.id = :userId
             AND ts.startDate <= :date
             AND ts.endDate >= :date
-            AND (
-                ts.completionPolicy = com.kanva.domain.taskseries.CompletionPolicy.PER_OCCURRENCE
-                OR (ts.completionPolicy = com.kanva.domain.taskseries.CompletionPolicy.COMPLETE_STOPS_SERIES AND (ts.stopDate IS NULL OR ts.stopDate >= :date))
-            )
+            AND (ts.stopDate IS NULL OR ts.stopDate >= :date)
             """)
     List<TaskSeries> findGeneratableSeriesForUserAndDate(@Param("userId") Long userId, @Param("date") LocalDate date);
 
@@ -56,10 +50,7 @@ public interface TaskSeriesRepository extends JpaRepository<TaskSeries, Long> {
     @Query("""
             SELECT ts FROM TaskSeries ts
             WHERE ts.user.id = :userId
-            AND (
-                ts.completionPolicy = com.kanva.domain.taskseries.CompletionPolicy.PER_OCCURRENCE
-                OR (ts.completionPolicy = com.kanva.domain.taskseries.CompletionPolicy.COMPLETE_STOPS_SERIES AND ts.stopDate IS NULL)
-            )
+            AND ts.stopDate IS NULL
             ORDER BY ts.createdAt DESC
             """)
     List<TaskSeries> findActiveSeriesByUserId(@Param("userId") Long userId);

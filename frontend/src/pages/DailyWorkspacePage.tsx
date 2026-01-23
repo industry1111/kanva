@@ -4,7 +4,7 @@ import DailyNoteEditor from '../components/note/DailyNoteEditor';
 import type { DailyNoteEditorRef } from '../components/note/DailyNoteEditor';
 import TaskList from '../components/tasks/TaskList';
 import { useAuth } from '../contexts/AuthContext';
-import { dailyNoteApi, taskApi } from '../services/api';
+import { dailyNoteApi, taskApi, taskSeriesApi } from '../services/api';
 import type { Task, DailyNote, TaskRequest } from '../types/api';
 
 function getToday(): string {
@@ -121,6 +121,26 @@ export default function DailyWorkspacePage() {
     }
   };
 
+  const handleSeriesExclude = async (seriesId: number, date: string) => {
+    try {
+      await taskSeriesApi.excludeDate(seriesId, date);
+      setTasks((prev) => prev.filter((task) => !(task.seriesId === seriesId)));
+    } catch (err) {
+      console.error('Failed to exclude date:', err);
+      alert('날짜 제외에 실패했습니다.');
+    }
+  };
+
+  const handleSeriesStop = async (seriesId: number, date: string) => {
+    try {
+      await taskSeriesApi.stopSeries(seriesId, date);
+      setTasks((prev) => prev.filter((task) => !(task.seriesId === seriesId)));
+    } catch (err) {
+      console.error('Failed to stop series:', err);
+      alert('시리즈 중단에 실패했습니다.');
+    }
+  };
+
   // Convert API Task to component format
   const tasksForComponent = tasks.map((task) => ({
     id: task.id,
@@ -128,26 +148,46 @@ export default function DailyWorkspacePage() {
     status: task.status,
   }));
 
-  if (isLoading) {
-    return (
-      <div className="workspace-container">
-        <div style={styles.loading}>로딩 중...</div>
-      </div>
-    );
-  }
+  const renderContent = () => {
+    if (isLoading) {
+      return <div style={styles.loading}>로딩 중...</div>;
+    }
 
-  if (error) {
-    return (
-      <div className="workspace-container">
+    if (error) {
+      return (
         <div style={styles.error}>
           <p>{error}</p>
           <button onClick={() => loadData(selectedDate)} style={styles.retryButton}>
             다시 시도
           </button>
         </div>
-      </div>
+      );
+    }
+
+    return (
+      <main className="workspace-main">
+        <div className="workspace-column">
+          <DailyNoteEditor
+            ref={noteEditorRef}
+            content={dailyNote?.content || ''}
+            onSave={handleNoteSave}
+          />
+        </div>
+        <div className="workspace-column">
+          <TaskList
+            tasks={tasksForComponent}
+            fullTasks={tasks}
+            selectedDate={selectedDate}
+            onAdd={handleAddTask}
+            onDelete={handleDeleteTask}
+            onSeriesExclude={handleSeriesExclude}
+            onSeriesStop={handleSeriesStop}
+            onUpdate={handleUpdateTask}
+          />
+        </div>
+      </main>
     );
-  }
+  };
 
   return (
     <div className="workspace-container">
@@ -168,24 +208,7 @@ export default function DailyWorkspacePage() {
         <DateBadge selectedDate={selectedDate} onSelectDate={handleDateChange} />
       </nav>
 
-      <main className="workspace-main">
-        <div className="workspace-column">
-          <DailyNoteEditor
-            ref={noteEditorRef}
-            content={dailyNote?.content || ''}
-            onSave={handleNoteSave}
-          />
-        </div>
-        <div className="workspace-column">
-          <TaskList
-            tasks={tasksForComponent}
-            fullTasks={tasks}
-            onAdd={handleAddTask}
-            onDelete={handleDeleteTask}
-            onUpdate={handleUpdateTask}
-          />
-        </div>
-      </main>
+      {renderContent()}
     </div>
   );
 }
@@ -195,7 +218,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100vh',
+    flex: 1,
     fontSize: '1.125rem',
     color: '#6b7280',
   },
@@ -204,7 +227,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100vh',
+    flex: 1,
     gap: '1rem',
     color: '#ef4444',
   },
