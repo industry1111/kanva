@@ -104,6 +104,12 @@ public class Task extends BaseEntity {
         this.dailyNote = dailyNote;
     }
 
+    // TaskSeries 연관관계 설정
+    public void assignToSeries(TaskSeries series, LocalDate taskDate) {
+        this.series = series;
+        this.taskDate = taskDate;
+    }
+
     /**
      * Task 완료 상태 토글
      * COMPLETED -> PENDING, 그 외 -> COMPLETED

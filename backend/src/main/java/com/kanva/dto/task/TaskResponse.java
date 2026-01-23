@@ -22,6 +22,9 @@ public class TaskResponse {
     private TaskStatus status;
     private Integer position;
     private boolean overdue;
+    private boolean repeatDaily;
+    private boolean stopOnComplete;
+    private LocalDate endDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -46,6 +49,9 @@ public class TaskResponse {
                 .status(task.getStatus())
                 .position(task.getPosition())
                 .overdue(task.isOverdue())
+                .repeatDaily(repeatDaily)
+                .stopOnComplete(stopOnComplete)
+                .endDate(endDate)
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .repeatDaily(isRepeatDaily)
