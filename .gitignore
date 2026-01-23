@@ -39,3 +39,6 @@ frontend/.vite/
 
 ### Markdown ###
 *.md
+
+### Local Config (sensitive) ###
+**/application-local.properties
