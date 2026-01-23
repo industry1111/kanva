@@ -5,6 +5,7 @@ import com.slack.api.Slack;
 import com.slack.api.methods.MethodsClient;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import com.slack.api.methods.response.conversations.ConversationsOpenResponse;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,10 +14,25 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Slack DM 전송 서비스
+ *
+ * 흐름: conversations.open → chat.postMessage
+ * - conversations.open: 봇과 사용자 간 1:1 DM 채널을 열거나 기존 채널 ID를 반환
+ * - chat.postMessage: 해당 DM 채널에 메시지 전송
+ *
+ * Incoming Webhook이 아닌 DM 방식을 사용하는 이유:
+ * - 개인 생산성 도구이므로 사용자에게 직접 알림 전달이 핵심
+ * - 채널이 아닌 개인 DM으로 전송해야 다른 사용자에게 노출되지 않음
+ * - 향후 다중 사용자 확장 시 userId별로 개별 DM 전송 가능
+ */
 @Service
 @Slf4j
 public class SlackServiceImpl implements SlackService {
+
+    private static final int MAX_DISPLAY_TASKS = 10;
 
     @Value("${slack.bot.token:}")
     private String botToken;
@@ -24,57 +40,59 @@ public class SlackServiceImpl implements SlackService {
     @Value("${slack.user.id:}")
     private String defaultUserId;
 
-    private final Slack slack = Slack.getInstance();
+    /** MethodsClient 재사용 (정책 2: 매 호출마다 생성하지 않음) */
+    private MethodsClient client;
+
+    /** DM 채널 ID 캐시 - userId → dmChannelId (정책 1: 매번 열지 않음) */
+    private final ConcurrentHashMap<String, String> dmChannelCache = new ConcurrentHashMap<>();
+
+    @PostConstruct
+    void init() {
+        if (!botToken.isEmpty()) {
+            this.client = Slack.getInstance().methods(botToken);
+            log.info("Slack client initialized");
+        } else {
+            log.debug("Slack bot token not configured, Slack notifications disabled");
+        }
+    }
 
     @Override
     public void sendDirectMessage(String slackUserId, String message) {
-        if (botToken.isEmpty()) {
-            log.warn("Slack bot token not configured, skipping notification");
+        // 정책 3: 설정 없으면 조용히 skip
+        if (client == null) {
             return;
         }
 
-        String targetUserId = (slackUserId == null || slackUserId.isEmpty()) ? defaultUserId : slackUserId;
+        String targetUserId = (slackUserId != null && !slackUserId.isEmpty()) ? slackUserId : defaultUserId;
         if (targetUserId.isEmpty()) {
-            log.warn("Slack user ID not specified, skipping notification");
             return;
         }
 
         try {
-            MethodsClient client = slack.methods(botToken);
-
-            // 1. DM 채널 열기
-            ConversationsOpenResponse openResponse = client.conversationsOpen(req -> req
-                    .users(List.of(targetUserId))
-            );
-
-            if (!openResponse.isOk()) {
-                log.error("Failed to open DM channel: {}", openResponse.getError());
+            String dmChannelId = getOrOpenDmChannel(targetUserId);
+            if (dmChannelId == null) {
                 return;
             }
 
-            String dmChannelId = openResponse.getChannel().getId();
-
-            // 2. 메시지 전송
             ChatPostMessageResponse response = client.chatPostMessage(req -> req
                     .channel(dmChannelId)
                     .text(message)
             );
 
-            if (response.isOk()) {
-                log.info("Slack DM sent successfully to user: {}", targetUserId);
-            } else {
-                log.error("Failed to send Slack DM: {}", response.getError());
+            if (!response.isOk()) {
+                // 정책 4: 실패 시 로그만
+                log.error("Slack chat.postMessage failed: {}", response.getError());
             }
 
         } catch (Exception e) {
-            log.error("Error sending Slack DM", e);
+            // 정책 4, 6: 예외는 로그만 남기고 비즈니스 로직에 전파하지 않음
+            log.error("Slack DM send error for user {}: {}", targetUserId, e.getMessage());
         }
     }
 
     @Override
     public void sendDailyTaskNotification(LocalDate date, List<String> taskTitles) {
-        if (defaultUserId.isEmpty()) {
-            log.warn("Slack user ID not configured, skipping notification");
+        if (client == null || defaultUserId.isEmpty()) {
             return;
         }
 
@@ -82,36 +100,78 @@ public class SlackServiceImpl implements SlackService {
                 DateTimeFormatter.ofPattern("yyyy년 M월 d일 (E)", Locale.KOREAN)
         );
 
-        StringBuilder message = new StringBuilder();
-        message.append("📅 ").append(dateStr).append(" 오늘의 할 일\n\n");
+        StringBuilder msg = new StringBuilder();
+        msg.append("📅 ").append(dateStr).append(" 오늘의 할 일\n\n");
 
         if (taskTitles.isEmpty()) {
-            message.append("등록된 Task가 없습니다. 오늘 하루도 화이팅! 🎉");
+            msg.append("등록된 Task가 없습니다.");
         } else {
-            for (String title : taskTitles) {
-                message.append("☐ ").append(title).append("\n");
+            // 정책 5: 상위 N개만 표시, 나머지 요약
+            int displayCount = Math.min(taskTitles.size(), MAX_DISPLAY_TASKS);
+            for (int i = 0; i < displayCount; i++) {
+                msg.append("• ").append(taskTitles.get(i)).append("\n");
             }
-            message.append("\n총 ").append(taskTitles.size()).append("개의 Task가 있습니다.");
+            int remaining = taskTitles.size() - displayCount;
+            if (remaining > 0) {
+                msg.append("  ...외 ").append(remaining).append("개\n");
+            }
+            msg.append("\n총 ").append(taskTitles.size()).append("개");
         }
 
-        sendDirectMessage(defaultUserId, message.toString());
+        sendDirectMessage(defaultUserId, msg.toString());
     }
 
     @Override
     public void sendDueSoonNotification(List<String> taskTitles) {
-        if (defaultUserId.isEmpty() || taskTitles.isEmpty()) {
+        if (client == null || defaultUserId.isEmpty() || taskTitles.isEmpty()) {
             return;
         }
 
-        StringBuilder message = new StringBuilder();
-        message.append("⚠️ 마감 임박 Task\n\n");
+        StringBuilder msg = new StringBuilder();
+        msg.append("⚠️ 마감 임박 Task\n\n");
 
-        for (String title : taskTitles) {
-            message.append("• ").append(title).append("\n");
+        int displayCount = Math.min(taskTitles.size(), MAX_DISPLAY_TASKS);
+        for (int i = 0; i < displayCount; i++) {
+            msg.append("• ").append(taskTitles.get(i)).append("\n");
+        }
+        int remaining = taskTitles.size() - displayCount;
+        if (remaining > 0) {
+            msg.append("  ...외 ").append(remaining).append("개");
         }
 
-        message.append("\n서두르세요! 💪");
+        sendDirectMessage(defaultUserId, msg.toString());
+    }
 
-        sendDirectMessage(defaultUserId, message.toString());
+    /**
+     * DM 채널 ID를 캐시에서 조회하거나, 없으면 conversations.open으로 열어서 캐시
+     *
+     * conversations.open은 이미 열린 채널이 있으면 기존 채널을 반환하므로 멱등하지만,
+     * 불필요한 API 호출을 줄이기 위해 로컬 캐시를 사용한다.
+     */
+    private String getOrOpenDmChannel(String userId) {
+        String cached = dmChannelCache.get(userId);
+        if (cached != null) {
+            return cached;
+        }
+
+        try {
+            ConversationsOpenResponse response = client.conversationsOpen(req -> req
+                    .users(List.of(userId))
+            );
+
+            if (!response.isOk()) {
+                log.error("Slack conversations.open failed for user {}: {}", userId, response.getError());
+                return null;
+            }
+
+            String channelId = response.getChannel().getId();
+            dmChannelCache.put(userId, channelId);
+            log.debug("DM channel opened and cached: userId={}, channelId={}", userId, channelId);
+            return channelId;
+
+        } catch (Exception e) {
+            log.error("Slack conversations.open error for user {}: {}", userId, e.getMessage());
+            return null;
+        }
     }
 }
