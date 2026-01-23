@@ -172,6 +172,23 @@ export const taskApi = {
   },
 };
 
+// TaskSeries API
+export const taskSeriesApi = {
+  excludeDate: async (taskSeriesId: number, date: string): Promise<ApiResponse<void>> => {
+    return fetchWithAuth(`/task-series/${taskSeriesId}/exclude`, {
+      method: 'POST',
+      body: JSON.stringify({ date }),
+    });
+  },
+
+  stopSeries: async (taskSeriesId: number, stopDate: string): Promise<ApiResponse<void>> => {
+    return fetchWithAuth(`/task-series/${taskSeriesId}/stop`, {
+      method: 'POST',
+      body: JSON.stringify({ stopDate }),
+    });
+  },
+};
+
 // Dashboard API
 export const dashboardApi = {
   get: async (month: string): Promise<ApiResponse<DashboardResponse>> => {
