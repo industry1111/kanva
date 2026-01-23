@@ -3,31 +3,37 @@ package com.kanva.service.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
+
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * SlackServiceImpl 실제 발송 테스트
- * 실제 Slack API를 호출하여 DM을 전송한다.
- *
- * 환경변수 설정 필요:
- * - SLACK_BOT_TOKEN: Slack Bot Token (xoxb-...)
- * - SLACK_USER_ID: Slack User ID (U...)
+ * application-local.properties에서 토큰을 읽어 실제 Slack DM을 전송한다.
+ * 설정이 없으면 테스트를 skip한다.
  */
-@EnabledIfEnvironmentVariable(named = "SLACK_BOT_TOKEN", matches = ".+")
 class SlackServiceImplTest {
 
     private SlackServiceImpl slackService;
+    private String userId;
 
     @BeforeEach
     void setUp() throws Exception {
-        String botToken = System.getenv("SLACK_BOT_TOKEN");
-        String userId = System.getenv("SLACK_USER_ID");
+        Properties props = new Properties();
+        InputStream is = getClass().getClassLoader().getResourceAsStream("application-local.properties");
+        assumeTrue(is != null, "application-local.properties not found");
+        props.load(is);
+
+        String botToken = props.getProperty("slack.bot.token", "");
+        userId = props.getProperty("slack.user.id", "");
+        assumeTrue(!botToken.isEmpty(), "slack.bot.token not configured");
 
         slackService = new SlackServiceImpl();
         setField(slackService, "botToken", botToken);
@@ -38,7 +44,7 @@ class SlackServiceImplTest {
     @Test
     @DisplayName("실제 DM 전송 테스트")
     void sendDirectMessage() {
-        slackService.sendDirectMessage(System.getenv("SLACK_USER_ID"), "테스트 메시지입니다.");
+        slackService.sendDirectMessage(userId, "테스트 메시지입니다.");
     }
 
     @Test
