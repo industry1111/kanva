@@ -10,7 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/task-series")
@@ -68,5 +71,31 @@ public class TaskSeriesController {
     public ResponseEntity<ApiResponse<String>> generateTodayTasks() {
         taskSeriesService.generateTodayTasks();
         return ResponseEntity.ok(ApiResponse.ok("오늘 Task 생성 완료"));
+    }
+
+    /**
+     * 시리즈에서 특정 날짜 제외
+     * POST /api/task-series/{id}/exclude
+     */
+    @PostMapping("/{id}/exclude")
+    public ResponseEntity<ApiResponse<String>> excludeDate(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        LocalDate date = LocalDate.parse(request.get("date"));
+        taskSeriesService.excludeDate(id, date);
+        return ResponseEntity.ok(ApiResponse.ok("날짜 제외 완료"));
+    }
+
+    /**
+     * 시리즈 중단
+     * POST /api/task-series/{id}/stop
+     */
+    @PostMapping("/{id}/stop")
+    public ResponseEntity<ApiResponse<String>> stopSeries(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        LocalDate stopDate = LocalDate.parse(request.get("stopDate"));
+        taskSeriesService.stopSeries(id, stopDate);
+        return ResponseEntity.ok(ApiResponse.ok("시리즈 중단 완료"));
     }
 }

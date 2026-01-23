@@ -57,4 +57,26 @@ public interface TaskSeriesService {
      * @return 미래 인스턴스 삭제 개수
      */
     int handleTaskCompletion(Task task);
+
+    /**
+     * 시리즈에서 특정 날짜 제외 (해당 날짜 인스턴스 삭제 + excluded_date 기록)
+     */
+    void excludeDate(Long seriesId, LocalDate date);
+
+    /**
+     * 시리즈 중단 (stopDate 설정 + 이후 인스턴스 삭제)
+     */
+    void stopSeries(Long seriesId, LocalDate stopDate);
+
+    /**
+     * 시리즈 자동 정리 조건 확인 후 삭제
+     *
+     * 조건 (ALL):
+     * 1) 종료 의사 확정: stopDate != null OR 전체 기간이 exclusion
+     * 2) 미래 Task 생성 불가
+     * 3) 해당 시리즈에 속한 Task가 0개
+     *
+     * @return 정리되었으면 true
+     */
+    boolean cleanupIfEligible(Long seriesId);
 }
