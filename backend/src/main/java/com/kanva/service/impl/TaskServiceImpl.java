@@ -5,8 +5,7 @@ import com.kanva.domain.dailynote.DailyNoteRepository;
 import com.kanva.domain.task.Task;
 import com.kanva.domain.task.TaskRepository;
 import com.kanva.domain.task.TaskStatus;
-import com.kanva.domain.taskseries.TaskSeries;
-import com.kanva.domain.taskseries.TaskSeriesRepository;
+import com.kanva.domain.taskseries.CompletionPolicy;
 import com.kanva.domain.user.User;
 import com.kanva.domain.user.UserRepository;
 import com.kanva.dto.task.TaskPositionUpdateRequest;
@@ -14,16 +13,25 @@ import com.kanva.dto.task.TaskRequest;
 import com.kanva.dto.task.TaskResponse;
 import com.kanva.dto.task.TaskStatusUpdateRequest;
 import com.kanva.exception.TaskNotFoundException;
+import com.kanva.exception.TaskStatusChangeNotAllowedException;
 import com.kanva.exception.UserNotFoundException;
+import com.kanva.service.TaskSeriesService;
 import com.kanva.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Task 비즈니스 로직
+ *
+ * 시간 기준: 모든 날짜 판단은 Seoul Clock 기준
+ * 미래 Task: 상태 변경 불가, 삭제/수정은 가능
+ */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -33,10 +41,15 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final DailyNoteRepository dailyNoteRepository;
     private final UserRepository userRepository;
-    private final TaskSeriesRepository taskSeriesRepository;
+    private final TaskSeriesService taskSeriesService;
+    private final Clock clock;
 
     @Override
+    @Transactional
     public List<TaskResponse> getTasksByDate(Long userId, LocalDate date) {
+        // 해당 날짜에 대한 시리즈 Task 온디맨드 생성
+        taskSeriesService.generateTasksForDate(userId, date);
+
         return taskRepository.findByUserIdAndDate(userId, date)
                 .stream()
                 .map(TaskResponse::from)
@@ -62,12 +75,21 @@ public class TaskServiceImpl implements TaskService {
                 .dailyNote(dailyNote)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .dueDate(request.getDueDate())
+                .dueDate(null)  // 단일 Task는 dueDate 없음
                 .status(request.getStatus())
                 .position(newPosition)
                 .build();
 
         Task savedTask = taskRepository.save(task);
+
+        // repeatDaily=true인 경우 시리즈 생성
+        if (request.isRepeatDaily() && request.getEndDate() != null) {
+            CompletionPolicy policy = request.isStopOnComplete()
+                    ? CompletionPolicy.COMPLETE_STOPS_SERIES
+                    : CompletionPolicy.PER_OCCURRENCE;
+            taskSeriesService.createSeriesFromTask(savedTask, request.getEndDate(), policy);
+        }
+
         return TaskResponse.from(savedTask);
     }
 
@@ -78,15 +100,24 @@ public class TaskServiceImpl implements TaskService {
 
         task.updateTitle(request.getTitle());
         task.updateDescription(request.getDescription());
-        task.updateDueDate(request.getDueDate());
 
+        // repeatDaily=true이고 시리즈가 아직 없는 경우 시리즈 생성
+        if (request.isRepeatDaily() && request.getEndDate() != null && !task.isSeriesTask()) {
+            CompletionPolicy policy = request.isStopOnComplete()
+                    ? CompletionPolicy.COMPLETE_STOPS_SERIES
+                    : CompletionPolicy.PER_OCCURRENCE;
+            taskSeriesService.createSeriesFromTask(task, request.getEndDate(), policy);
+        }
+
+        // 상태 변경 처리
         if (request.getStatus() != null) {
+            validateNotFutureTask(task);
             TaskStatus oldStatus = task.getStatus();
             task.updateStatus(request.getStatus());
 
-            // 시리즈 Task가 COMPLETED로 변경되면 시리즈 중단
+            // PENDING -> COMPLETED 전환 시 시리즈 완료 처리
             if (request.getStatus() == TaskStatus.COMPLETED && oldStatus != TaskStatus.COMPLETED) {
-                handleSeriesCompletion(task);
+                taskSeriesService.handleTaskCompletion(task);
             }
         }
 
@@ -105,13 +136,14 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public TaskResponse updateTaskStatus(Long userId, Long taskId, TaskStatusUpdateRequest request) {
         Task task = findTaskByIdAndUserId(taskId, userId);
-        TaskStatus oldStatus = task.getStatus();
+        validateNotFutureTask(task);
 
+        TaskStatus oldStatus = task.getStatus();
         task.updateStatus(request.getStatus());
 
-        // 시리즈 Task가 COMPLETED로 변경되면 시리즈 중단
+        // PENDING -> COMPLETED 전환 시 시리즈 완료 처리
         if (request.getStatus() == TaskStatus.COMPLETED && oldStatus != TaskStatus.COMPLETED) {
-            handleSeriesCompletion(task);
+            taskSeriesService.handleTaskCompletion(task);
         }
 
         return TaskResponse.from(task);
@@ -121,13 +153,14 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public TaskResponse toggleTask(Long userId, Long taskId) {
         Task task = findTaskByIdAndUserId(taskId, userId);
-        boolean wasCompleted = task.isCompleted();
+        validateNotFutureTask(task);
 
+        boolean wasCompleted = task.isCompleted();
         task.toggle();
 
-        // 시리즈 Task가 COMPLETED로 토글되면 시리즈 중단
+        // PENDING -> COMPLETED 토글 시 시리즈 완료 처리
         if (!wasCompleted && task.isCompleted()) {
-            handleSeriesCompletion(task);
+            taskSeriesService.handleTaskCompletion(task);
         }
 
         return TaskResponse.from(task);
@@ -158,26 +191,21 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public List<TaskResponse> getOverdueTasks(Long userId) {
-        return taskRepository.findOverdueTasks(userId, LocalDate.now())
+        LocalDate today = LocalDate.now(clock);
+        return taskRepository.findOverdueTasks(userId, today)
                 .stream()
                 .map(TaskResponse::from)
                 .toList();
     }
 
     /**
-     * 시리즈 Task 완료 시 시리즈 중단 처리
+     * 미래 날짜 Task 상태 변경 불가 검증 (Seoul Clock 기준)
      */
-    private void handleSeriesCompletion(Task task) {
-        if (!task.isSeriesTask()) {
-            return;
-        }
-
-        TaskSeries series = task.getSeries();
-        if (series != null && series.isActive() && series.isStopOnComplete()) {
-            LocalDate taskDate = task.getDailyNote().getDate();
-            series.stop(taskDate);
-            log.info("Series {} stopped due to task {} completion on date {}",
-                    series.getId(), task.getId(), taskDate);
+    private void validateNotFutureTask(Task task) {
+        LocalDate taskDate = task.getDailyNote().getDate();
+        LocalDate today = LocalDate.now(clock);
+        if (taskDate.isAfter(today)) {
+            throw new TaskStatusChangeNotAllowedException();
         }
     }
 
