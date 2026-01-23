@@ -42,3 +42,6 @@ frontend/.vite/
 
 ### Local Config (sensitive) ###
 **/application-local.properties
+
+### Archives ###
+*.zip
