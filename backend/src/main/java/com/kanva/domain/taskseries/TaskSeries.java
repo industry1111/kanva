@@ -48,8 +48,11 @@ public class TaskSeries extends BaseEntity {
     @Column(name = "stop_date")
     private LocalDate stopDate;
 
+    @Column(name = "stop_on_complete", nullable = false)
+    private boolean stopOnComplete;
+
     @Builder
-    public TaskSeries(User user, String title, String description, LocalDate startDate, LocalDate endDate) {
+    public TaskSeries(User user, String title, String description, LocalDate startDate, LocalDate endDate, Boolean stopOnComplete) {
         this.user = user;
         this.title = title;
         this.description = description;
@@ -57,6 +60,7 @@ public class TaskSeries extends BaseEntity {
         this.endDate = endDate;
         this.status = TaskSeriesStatus.ACTIVE;
         this.stopDate = null;
+        this.stopOnComplete = stopOnComplete != null ? stopOnComplete : true;
     }
 
     /**

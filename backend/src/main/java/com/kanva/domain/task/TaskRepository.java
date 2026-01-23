@@ -45,5 +45,5 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findDueSoonTasks(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     // TaskSeries: 해당 시리즈의 해당 날짜 인스턴스 존재 여부 확인 (멱등성 보장)
-    boolean existsBySeriesIdAndTaskDate(Long seriesId, LocalDate taskDate);
+    boolean existsBySeries_IdAndTaskDate(Long seriesId, LocalDate taskDate);
 }

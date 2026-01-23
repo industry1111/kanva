@@ -47,6 +47,7 @@ public class TaskSeriesServiceImpl implements TaskSeriesService {
                 .description(request.getDescription())
                 .startDate(startDate)
                 .endDate(request.getEndDate())
+                .stopOnComplete(request.getStopOnComplete())
                 .build();
 
         TaskSeries savedSeries = taskSeriesRepository.save(series);
@@ -90,7 +91,7 @@ public class TaskSeriesServiceImpl implements TaskSeriesService {
 
         for (TaskSeries series : activeSeriesList) {
             // 멱등성: 이미 해당 날짜에 인스턴스가 존재하는지 확인
-            if (taskRepository.existsBySeriesIdAndTaskDate(series.getId(), today)) {
+            if (taskRepository.existsBySeries_IdAndTaskDate(series.getId(), today)) {
                 log.debug("Task already exists for series {} on {}", series.getId(), today);
                 skippedCount++;
                 continue;
