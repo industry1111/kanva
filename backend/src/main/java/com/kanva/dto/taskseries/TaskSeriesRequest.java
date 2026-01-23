@@ -20,4 +20,6 @@ public class TaskSeriesRequest {
 
     @NotNull(message = "종료일(dueDate)은 필수입니다")
     private LocalDate endDate;
+
+    private Boolean stopOnComplete;
 }
