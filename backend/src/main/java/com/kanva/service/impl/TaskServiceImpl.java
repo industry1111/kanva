@@ -121,14 +121,6 @@ public class TaskServiceImpl implements TaskService {
             }
         }
 
-        // 반복 설정: repeatDaily가 true이고 아직 시리즈가 없는 경우 시리즈 생성
-        if (Boolean.TRUE.equals(request.getRepeatDaily()) && !task.isSeriesTask()) {
-            if (request.getEndDate() == null) {
-                throw new IllegalArgumentException("반복 종료일(endDate)은 필수입니다");
-            }
-            createSeriesForTask(task, request);
-        }
-
         return TaskResponse.from(task);
     }
 
@@ -207,29 +199,6 @@ public class TaskServiceImpl implements TaskService {
         if (taskDate.isAfter(today)) {
             throw new TaskStatusChangeNotAllowedException();
         }
-    }
-
-    /**
-     * 기존 Task에 대해 새 TaskSeries 생성
-     */
-    private void createSeriesForTask(Task task, TaskRequest request) {
-        User user = task.getDailyNote().getUser();
-        LocalDate startDate = task.getDailyNote().getDate();
-
-        TaskSeries series = TaskSeries.builder()
-                .user(user)
-                .title(task.getTitle())
-                .description(task.getDescription())
-                .startDate(startDate)
-                .endDate(request.getEndDate())
-                .stopOnComplete(request.getStopOnComplete())
-                .build();
-
-        TaskSeries savedSeries = taskSeriesRepository.save(series);
-        task.assignToSeries(savedSeries, startDate);
-
-        log.info("Created series {} for task {} with endDate {}, stopOnComplete {}",
-                savedSeries.getId(), task.getId(), request.getEndDate(), request.getStopOnComplete());
     }
 
     private User findUserById(Long userId) {

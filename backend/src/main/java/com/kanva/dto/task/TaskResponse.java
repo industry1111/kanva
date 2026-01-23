@@ -28,11 +28,6 @@ public class TaskResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // 반복 Task 정보
-    private boolean repeatDaily;
-    private boolean stopOnComplete;
-    private LocalDate endDate;
-
     public static TaskResponse from(Task task) {
         TaskSeries series = task.getSeries();
         boolean isRepeatDaily = series != null;
@@ -49,14 +44,11 @@ public class TaskResponse {
                 .status(task.getStatus())
                 .position(task.getPosition())
                 .overdue(task.isOverdue())
-                .repeatDaily(repeatDaily)
-                .stopOnComplete(stopOnComplete)
-                .endDate(endDate)
-                .createdAt(task.getCreatedAt())
-                .updatedAt(task.getUpdatedAt())
                 .repeatDaily(isRepeatDaily)
                 .stopOnComplete(isStopOnComplete)
                 .endDate(endDate)
+                .createdAt(task.getCreatedAt())
+                .updatedAt(task.getUpdatedAt())
                 .build();
     }
 }

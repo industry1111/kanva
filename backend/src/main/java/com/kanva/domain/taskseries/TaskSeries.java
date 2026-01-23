@@ -80,7 +80,7 @@ public class TaskSeries extends BaseEntity {
         this.endDate = endDate;
         this.completionPolicy = completionPolicy != null ? completionPolicy : CompletionPolicy.PER_OCCURRENCE;
         this.stopDate = null;
-        this.stopOnComplete = stopOnComplete != null ? stopOnComplete : true;
+        this.stopOnComplete = this.completionPolicy == CompletionPolicy.COMPLETE_STOPS_SERIES;
     }
 
     /**
