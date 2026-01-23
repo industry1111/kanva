@@ -7,6 +7,8 @@ import com.kanva.domain.task.TaskRepository;
 import com.kanva.domain.task.TaskStatus;
 import com.kanva.domain.taskseries.CompletionPolicy;
 import com.kanva.domain.taskseries.TaskSeries;
+import com.kanva.domain.taskseries.TaskSeriesExcludedDate;
+import com.kanva.domain.taskseries.TaskSeriesExcludedDateRepository;
 import com.kanva.domain.taskseries.TaskSeriesRepository;
 import com.kanva.domain.user.User;
 import com.kanva.domain.user.UserRepository;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -41,6 +44,7 @@ import java.util.List;
 public class TaskSeriesServiceImpl implements TaskSeriesService {
 
     private final TaskSeriesRepository taskSeriesRepository;
+    private final TaskSeriesExcludedDateRepository excludedDateRepository;
     private final TaskRepository taskRepository;
     private final DailyNoteRepository dailyNoteRepository;
     private final UserRepository userRepository;
@@ -123,6 +127,11 @@ public class TaskSeriesServiceImpl implements TaskSeriesService {
         List<TaskSeries> seriesList = taskSeriesRepository.findGeneratableSeriesForUserAndDate(userId, date);
 
         for (TaskSeries series : seriesList) {
+            // 제외된 날짜인지 확인
+            if (excludedDateRepository.existsByIdTaskSeriesIdAndIdDate(series.getId(), date)) {
+                continue;
+            }
+
             // 이미 해당 날짜에 인스턴스가 존재하는지 확인
             if (taskRepository.existsBySeries_IdAndTaskDate(series.getId(), date)) {
                 continue;
@@ -151,6 +160,13 @@ public class TaskSeriesServiceImpl implements TaskSeriesService {
         int skippedCount = 0;
 
         for (TaskSeries series : seriesList) {
+            // 제외된 날짜인지 확인
+            if (excludedDateRepository.existsByIdTaskSeriesIdAndIdDate(series.getId(), today)) {
+                log.debug("Date {} is excluded for series {}", today, series.getId());
+                skippedCount++;
+                continue;
+            }
+
             // 이미 해당 날짜에 인스턴스가 존재하는지 확인
             if (taskRepository.existsBySeries_IdAndTaskDate(series.getId(), today)) {
                 log.debug("Task already exists for series {} on {}", series.getId(), today);
@@ -203,6 +219,84 @@ public class TaskSeriesServiceImpl implements TaskSeriesService {
         }
 
         return 0;
+    }
+
+    @Override
+    @Transactional
+    public void excludeDate(Long seriesId, LocalDate date) {
+        TaskSeries series = taskSeriesRepository.findById(seriesId)
+                .orElseThrow(() -> new IllegalArgumentException("TaskSeries not found: " + seriesId));
+
+        // excluded_date 기록 (중복 방지)
+        if (!excludedDateRepository.existsByIdTaskSeriesIdAndIdDate(seriesId, date)) {
+            excludedDateRepository.save(new TaskSeriesExcludedDate(series, date));
+        }
+
+        // 해당 날짜 Task 인스턴스 삭제
+        int deleted = taskRepository.deleteBySeries_IdAndTaskDate(seriesId, date);
+
+        log.info("Excluded date {} from series {}. Deleted {} task instances", date, seriesId, deleted);
+
+        // 자동 정리 확인
+        cleanupIfEligible(seriesId);
+    }
+
+    @Override
+    @Transactional
+    public void stopSeries(Long seriesId, LocalDate stopDate) {
+        TaskSeries series = taskSeriesRepository.findById(seriesId)
+                .orElseThrow(() -> new IllegalArgumentException("TaskSeries not found: " + seriesId));
+
+        series.forceStop(stopDate);
+
+        // stopDate 포함 이후 인스턴스 삭제
+        int deletedCurrent = taskRepository.deleteBySeries_IdAndTaskDate(seriesId, stopDate);
+        int deletedFuture = taskRepository.deleteBySeries_IdAndTaskDateAfter(seriesId, stopDate);
+        log.info("Stopped series {} on {}. Deleted {} instances (current: {}, future: {})",
+                seriesId, stopDate, deletedCurrent + deletedFuture, deletedCurrent, deletedFuture);
+
+        // 자동 정리 확인
+        cleanupIfEligible(seriesId);
+    }
+
+    @Override
+    @Transactional
+    public boolean cleanupIfEligible(Long seriesId) {
+        TaskSeries series = taskSeriesRepository.findById(seriesId).orElse(null);
+        if (series == null) {
+            return false;
+        }
+
+        // 조건 1: 종료 의사 확정 (STOP 또는 SKIP-all)
+        boolean hasEndIntent = false;
+
+        if (series.getStopDate() != null) {
+            // 1A) STOP 상태
+            hasEndIntent = true;
+        } else {
+            // 1B) SKIP-all 확인: 전체 기간의 날짜 수 == excluded 수
+            long plannedDays = ChronoUnit.DAYS.between(series.getStartDate(), series.getEndDate()) + 1;
+            long excludedCount = excludedDateRepository.countByIdTaskSeriesId(seriesId);
+            if (excludedCount >= plannedDays) {
+                hasEndIntent = true;
+            }
+        }
+
+        if (!hasEndIntent) {
+            return false;
+        }
+
+        // 조건 3: 해당 시리즈에 속한 Task가 0개
+        long activeTaskCount = taskRepository.countBySeries_Id(seriesId);
+        if (activeTaskCount > 0) {
+            return false;
+        }
+
+        // 모든 조건 충족 → 정리
+        excludedDateRepository.deleteAllByTaskSeriesId(seriesId);
+        taskSeriesRepository.delete(series);
+        log.info("Auto-cleaned series {} (title: {})", seriesId, series.getTitle());
+        return true;
     }
 
     private void createTaskInstance(TaskSeries series, LocalDate date) {
