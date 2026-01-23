@@ -19,6 +19,7 @@ public class TaskSeriesResponse {
     private LocalDate endDate;
     private TaskSeriesStatus status;
     private LocalDate stopDate;
+    private boolean stopOnComplete;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -31,6 +32,7 @@ public class TaskSeriesResponse {
                 .endDate(series.getEndDate())
                 .status(series.getStatus())
                 .stopDate(series.getStopDate())
+                .stopOnComplete(series.isStopOnComplete())
                 .createdAt(series.getCreatedAt())
                 .updatedAt(series.getUpdatedAt())
                 .build();

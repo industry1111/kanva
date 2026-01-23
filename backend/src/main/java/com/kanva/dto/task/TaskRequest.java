@@ -25,12 +25,22 @@ public class TaskRequest {
 
     private Integer position;
 
+    private Boolean repeatDaily;
+
+    private Boolean stopOnComplete;
+
+    private LocalDate endDate;
+
     @Builder
-    public TaskRequest(String title, String description, LocalDate dueDate, TaskStatus status, Integer position) {
+    public TaskRequest(String title, String description, LocalDate dueDate, TaskStatus status, Integer position,
+                       Boolean repeatDaily, Boolean stopOnComplete, LocalDate endDate) {
         this.title = title;
         this.description = description;
         this.dueDate = dueDate;
         this.status = status;
         this.position = position;
+        this.repeatDaily = repeatDaily;
+        this.stopOnComplete = stopOnComplete;
+        this.endDate = endDate;
     }
 }
