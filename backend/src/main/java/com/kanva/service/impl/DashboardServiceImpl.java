@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
@@ -27,12 +28,13 @@ public class DashboardServiceImpl implements DashboardService {
     private static final int DUE_SOON_DAYS = 7;
 
     private final TaskRepository taskRepository;
+    private final Clock clock;
 
     @Override
     public DashboardResponse getDashboard(Long userId, YearMonth month) {
         LocalDate startDate = month.atDay(1);
         LocalDate endDate = month.atEndOfMonth();
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
 
         // 1. 월 범위 전체 Task 조회 (1회 쿼리)
         List<Task> monthTasks = taskRepository.findByUserIdAndDateRange(userId, startDate, endDate);

@@ -2,6 +2,8 @@ package com.kanva.dto.task;
 
 import com.kanva.domain.task.Task;
 import com.kanva.domain.task.TaskStatus;
+import com.kanva.domain.taskseries.CompletionPolicy;
+import com.kanva.domain.taskseries.TaskSeries;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,7 +19,6 @@ public class TaskResponse {
     private Long seriesId;
     private String title;
     private String description;
-    private LocalDate dueDate;
     private TaskStatus status;
     private Integer position;
     private boolean overdue;
@@ -27,15 +28,17 @@ public class TaskResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static TaskResponse from(Task task) {
-        boolean repeatDaily = task.isSeriesTask();
-        boolean stopOnComplete = false;
-        LocalDate endDate = null;
+    // 반복 Task 정보
+    private boolean repeatDaily;
+    private boolean stopOnComplete;
+    private LocalDate endDate;
 
-        if (task.getSeries() != null) {
-            stopOnComplete = task.getSeries().isStopOnComplete();
-            endDate = task.getSeries().getEndDate();
-        }
+    public static TaskResponse from(Task task) {
+        TaskSeries series = task.getSeries();
+        boolean isRepeatDaily = series != null;
+        boolean isStopOnComplete = series != null
+                && series.getCompletionPolicy() == CompletionPolicy.COMPLETE_STOPS_SERIES;
+        LocalDate endDate = series != null ? series.getEndDate() : null;
 
         return TaskResponse.builder()
                 .id(task.getId())
@@ -43,7 +46,6 @@ public class TaskResponse {
                 .seriesId(task.getSeriesId())
                 .title(task.getTitle())
                 .description(task.getDescription())
-                .dueDate(task.getDueDate())
                 .status(task.getStatus())
                 .position(task.getPosition())
                 .overdue(task.isOverdue())
@@ -52,6 +54,9 @@ public class TaskResponse {
                 .endDate(endDate)
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
+                .repeatDaily(isRepeatDaily)
+                .stopOnComplete(isStopOnComplete)
+                .endDate(endDate)
                 .build();
     }
 }
