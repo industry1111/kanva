@@ -122,6 +122,31 @@ public class SlackServiceImpl implements SlackService {
     }
 
     @Override
+    public void sendIncompleteTaskReminder(LocalDate date, List<String> taskTitles) {
+        if (defaultUserId.isEmpty()) {
+            return;
+        }
+
+        String dateStr = date.format(
+                DateTimeFormatter.ofPattern("yyyy년 M월 d일 (E)", Locale.KOREAN)
+        );
+
+        StringBuilder message = new StringBuilder();
+        message.append("⏰ ").append(dateStr).append(" 미완료 Task 리마인더\n\n");
+
+        if (taskTitles.isEmpty()) {
+            message.append("오늘 할 일을 모두 완료했습니다! 🎉");
+        } else {
+            for (String title : taskTitles) {
+                message.append("☐ ").append(title).append("\n");
+            }
+            message.append("\n아직 ").append(taskTitles.size()).append("개의 Task가 남아있습니다.");
+        }
+
+        sendDirectMessage(defaultUserId, message.toString());
+    }
+
+    @Override
     public void sendDueSoonNotification(List<String> taskTitles) {
         if (client == null || defaultUserId.isEmpty() || taskTitles.isEmpty()) {
             return;

@@ -16,6 +16,11 @@ public interface SlackService {
     void sendDailyTaskNotification(LocalDate date, List<String> taskTitles);
 
     /**
+     * 미완료 Task 리마인더 전송
+     */
+    void sendIncompleteTaskReminder(LocalDate date, List<String> taskTitles);
+
+    /**
      * 마감 임박 Task 알림 전송
      */
     void sendDueSoonNotification(List<String> taskTitles);
