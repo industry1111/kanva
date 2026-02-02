@@ -55,7 +55,7 @@ public class UserServiceImpl implements UserService {
         }
 
         String authorities = "ROLE_" + user.getRole().name();
-        JwtToken jwtToken = jwtTokenProvider.generateToken(user.getEmail(), authorities);
+        JwtToken jwtToken = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), authorities);
 
         return LoginResponse.of(jwtToken, UserResponse.from(user));
     }

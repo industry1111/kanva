@@ -2,9 +2,11 @@ package com.kanva.controller.dashboard;
 
 import com.kanva.common.response.ApiResponse;
 import com.kanva.dto.dashboard.DashboardResponse;
+import com.kanva.security.UserPrincipal;
 import com.kanva.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,9 +27,9 @@ public class DashboardController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam String month) {
-        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
-        Long userId = 1L;
+        Long userId = principal.getId();
 
         YearMonth yearMonth = YearMonth.parse(month);
         DashboardResponse response = dashboardService.getDashboard(userId, yearMonth);

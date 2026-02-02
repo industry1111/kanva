@@ -9,9 +9,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import com.kanva.security.UserPrincipal;
 
 import javax.crypto.SecretKey;
 import java.util.Arrays;
@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
+    private static final String USER_ID_KEY = "userId";
 
     private final SecretKey key;
     private final long accessTokenExpiration;
@@ -69,18 +70,34 @@ public class JwtTokenProvider {
     }
 
     public JwtToken generateToken(String email, String authorities) {
+        return generateToken(null, email, authorities);
+    }
+
+    public JwtToken generateToken(Long userId, String email, String authorities) {
         long now = System.currentTimeMillis();
 
-        String accessToken = Jwts.builder()
+        var accessTokenBuilder = Jwts.builder()
                 .subject(email)
-                .claim(AUTHORITIES_KEY, authorities)
+                .claim(AUTHORITIES_KEY, authorities);
+
+        if (userId != null) {
+            accessTokenBuilder.claim(USER_ID_KEY, userId);
+        }
+
+        String accessToken = accessTokenBuilder
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + accessTokenExpiration))
                 .signWith(key)
                 .compact();
 
-        String refreshToken = Jwts.builder()
-                .subject(email)
+        var refreshTokenBuilder = Jwts.builder()
+                .subject(email);
+
+        if (userId != null) {
+            refreshTokenBuilder.claim(USER_ID_KEY, userId);
+        }
+
+        String refreshToken = refreshTokenBuilder
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + refreshTokenExpiration))
                 .signWith(key)
@@ -105,7 +122,8 @@ public class JwtTokenProvider {
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
+        Long userId = claims.get(USER_ID_KEY, Long.class);
+        UserPrincipal principal = new UserPrincipal(userId, claims.getSubject(), authorities);
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
 

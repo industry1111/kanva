@@ -2,11 +2,13 @@ package com.kanva.controller.dailynote;
 
 import com.kanva.common.response.ApiResponse;
 import com.kanva.dto.dailynote.*;
+import com.kanva.security.UserPrincipal;
 import com.kanva.service.DailyNoteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -26,9 +28,9 @@ public class DailyNoteController {
      */
     @GetMapping("/{date}")
     public ResponseEntity<ApiResponse<DailyNoteDetailResponse>> getDailyNote(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
-        Long userId = 1L;
+        Long userId = principal.getId();
 
         DailyNoteDetailResponse response = dailyNoteService.getOrCreateDailyNote(userId, date);
         return ResponseEntity.ok(ApiResponse.ok(response));
@@ -40,10 +42,10 @@ public class DailyNoteController {
      */
     @PutMapping("/{date}")
     public ResponseEntity<ApiResponse<DailyNoteResponse>> updateDailyNote(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @Valid @RequestBody DailyNoteRequest request) {
-        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
-        Long userId = 1L;
+        Long userId = principal.getId();
 
         DailyNoteResponse response = dailyNoteService.updateDailyNote(userId, date, request);
         return ResponseEntity.ok(ApiResponse.ok(response));
@@ -55,9 +57,9 @@ public class DailyNoteController {
      */
     @DeleteMapping("/{date}")
     public ResponseEntity<ApiResponse<Void>> deleteDailyNote(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
-        Long userId = 1L;
+        Long userId = principal.getId();
 
         dailyNoteService.deleteDailyNote(userId, date);
         return ResponseEntity.ok(ApiResponse.ok(null));
@@ -69,9 +71,9 @@ public class DailyNoteController {
      */
     @GetMapping("/calendar")
     public ResponseEntity<ApiResponse<List<DailyNoteSummaryResponse>>> getMonthlyNotes(
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam YearMonth month) {
-        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
-        Long userId = 1L;
+        Long userId = principal.getId();
 
         List<DailyNoteSummaryResponse> response = dailyNoteService.getMonthlyNotes(userId, month);
         return ResponseEntity.ok(ApiResponse.ok(response));
