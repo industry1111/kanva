@@ -3,11 +3,13 @@ package com.kanva.controller.taskseries;
 import com.kanva.common.response.ApiResponse;
 import com.kanva.dto.taskseries.TaskSeriesRequest;
 import com.kanva.dto.taskseries.TaskSeriesResponse;
+import com.kanva.security.UserPrincipal;
 import com.kanva.service.TaskSeriesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -28,9 +30,9 @@ public class TaskSeriesController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<TaskSeriesResponse>> createSeries(
+            @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody TaskSeriesRequest request) {
-        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
-        Long userId = 1L;
+        Long userId = principal.getId();
 
         TaskSeriesResponse response = taskSeriesService.createSeries(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -42,9 +44,9 @@ public class TaskSeriesController {
      * GET /api/task-series
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TaskSeriesResponse>>> getUserSeries() {
-        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
-        Long userId = 1L;
+    public ResponseEntity<ApiResponse<List<TaskSeriesResponse>>> getUserSeries(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long userId = principal.getId();
 
         List<TaskSeriesResponse> response = taskSeriesService.getUserSeries(userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
@@ -55,9 +57,9 @@ public class TaskSeriesController {
      * GET /api/task-series/active
      */
     @GetMapping("/active")
-    public ResponseEntity<ApiResponse<List<TaskSeriesResponse>>> getUserActiveSeries() {
-        // TODO: 임시 개발용 - 인증 구현 후 @AuthenticationPrincipal에서 userId 추출
-        Long userId = 1L;
+    public ResponseEntity<ApiResponse<List<TaskSeriesResponse>>> getUserActiveSeries(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long userId = principal.getId();
 
         List<TaskSeriesResponse> response = taskSeriesService.getUserActiveSeries(userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
