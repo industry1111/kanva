@@ -14,24 +14,16 @@ export interface FieldError {
 
 // User types
 export type Role = 'USER' | 'ADMIN';
+export type OAuthProvider = 'GITHUB' | 'SLACK';
 
 export interface User {
   id: number;
   email: string;
   name: string;
   role: Role;
+  picture?: string;
+  oauthProvider?: OAuthProvider;
   createdAt: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface SignUpRequest {
-  email: string;
-  password: string;
-  name: string;
 }
 
 export interface LoginResponse {
@@ -39,6 +31,17 @@ export interface LoginResponse {
   refreshToken: string;
   tokenType: string;
   user: User;
+}
+
+// OAuth types
+export interface OAuthLoginUrlResponse {
+  url: string;
+  state: string;
+}
+
+export interface OAuthCallbackRequest {
+  code: string;
+  state: string;
 }
 
 // Task types

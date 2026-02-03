@@ -1,20 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import DailyWorkspacePage from './pages/DailyWorkspacePage';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 
 type Page = 'workspace' | 'dashboard';
+
+function getOAuthProvider(): string | null {
+  const path = window.location.pathname;
+  const match = path.match(/^\/login\/oauth2\/code\/(\w+)$/);
+  return match ? match[1] : null;
+}
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('workspace');
+  const [oauthProvider, setOAuthProvider] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOAuthProvider(getOAuthProvider());
+  }, []);
+
+  if (oauthProvider) {
+    return <OAuthCallbackPage provider={oauthProvider} />;
+  }
 
   if (isLoading) {
     return (
       <div style={styles.loading}>
         <div style={styles.spinner} />
-        <span>로딩 중...</span>
+        <span>Loading...</span>
       </div>
     );
   }
