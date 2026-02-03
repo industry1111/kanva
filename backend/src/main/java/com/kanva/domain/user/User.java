@@ -34,13 +34,6 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 20)
     private Role role;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private OAuthProvider oauthProvider;
-
-    @Column(length = 100)
-    private String oauthProviderId;
-
     @Column(length = 500)
     private String picture;
 
@@ -48,22 +41,12 @@ public class User extends BaseEntity {
     private List<DailyNote> dailyNotes = new ArrayList<>();
 
     @Builder
-    public User(String email, String password, String name, Role role) {
+    public User(String email, String password, String name, Role role, String picture) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.role = role != null ? role : Role.USER;
-    }
-
-    @Builder(builderMethodName = "oauthBuilder")
-    public User(String email, String name, OAuthProvider oauthProvider,
-                String oauthProviderId, String picture, Role role) {
-        this.email = email;
-        this.name = name;
-        this.oauthProvider = oauthProvider;
-        this.oauthProviderId = oauthProviderId;
         this.picture = picture;
-        this.role = role != null ? role : Role.USER;
     }
 
     public void updateName(String name) {
@@ -74,15 +57,7 @@ public class User extends BaseEntity {
         this.password = password;
     }
 
-    public void updateOAuthInfo(String name, String email, String picture) {
-        this.name = name;
-        this.email = email;
-        this.picture = picture;
-    }
-
-    public void linkOAuth(OAuthProvider provider, String providerId, String picture) {
-        this.oauthProvider = provider;
-        this.oauthProviderId = providerId;
+    public void updatePicture(String picture) {
         this.picture = picture;
     }
 }
