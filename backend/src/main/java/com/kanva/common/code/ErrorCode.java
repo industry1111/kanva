@@ -17,6 +17,7 @@ public enum ErrorCode {
     // 401 Unauthorized
     UNAUTHORIZED(401, "인증이 필요합니다."),
     INVALID_CREDENTIALS(401, "이메일 또는 비밀번호가 일치하지 않습니다."),
+    OAUTH_FAILED(401, "OAuth 인증에 실패했습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),

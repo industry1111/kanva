@@ -1,8 +1,8 @@
 import type {
   ApiResponse,
-  LoginRequest,
   LoginResponse,
-  SignUpRequest,
+  OAuthLoginUrlResponse,
+  OAuthCallbackRequest,
   User,
   Task,
   TaskRequest,
@@ -15,9 +15,6 @@ import type {
 } from '../types/api';
 
 const API_BASE_URL = 'http://localhost:8080/api';
-
-// TODO: 임시 개발용 - 인증 없이 API 테스트
-const DEV_SKIP_AUTH = true;
 
 // Token management
 const TOKEN_KEY = 'kanva_access_token';
@@ -57,10 +54,9 @@ async function fetchWithAuth<T>(
     headers,
   });
 
-  // TODO: 임시 개발용 - 401 리다이렉트 스킵
-  if (!DEV_SKIP_AUTH && response.status === 401) {
+  if (response.status === 401) {
     clearTokens();
-    window.location.href = '/login';
+    window.location.href = '/';
     throw new Error('Unauthorized');
   }
 
@@ -70,17 +66,13 @@ async function fetchWithAuth<T>(
 
 // Auth API
 export const authApi = {
-  login: async (request: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
+  getOAuthLoginUrl: async (provider: string): Promise<ApiResponse<OAuthLoginUrlResponse>> => {
+    const response = await fetch(`${API_BASE_URL}/auth/oauth/${provider}/login-url`);
     return response.json();
   },
 
-  signUp: async (request: SignUpRequest): Promise<ApiResponse<User>> => {
-    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+  oauthCallback: async (provider: string, request: OAuthCallbackRequest): Promise<ApiResponse<LoginResponse>> => {
+    const response = await fetch(`${API_BASE_URL}/auth/oauth/${provider}/callback`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),

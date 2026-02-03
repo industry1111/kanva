@@ -69,6 +69,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ErrorCode.INVALID_CREDENTIALS));
     }
 
+    @ExceptionHandler(OAuthException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOAuthException(OAuthException e) {
+        log.error("OAuthException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.fail(ErrorCode.OAUTH_FAILED, e.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.error("MethodArgumentNotValidException: {}", e.getMessage());
