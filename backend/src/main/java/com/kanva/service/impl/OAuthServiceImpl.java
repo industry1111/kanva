@@ -242,7 +242,8 @@ public class OAuthServiceImpl implements OAuthService {
                 + "?client_id=" + config.getClientId()
                 + "&redirect_uri=" + encode(config.getRedirectUri())
                 + "&user_scope=" + encode("identity.basic,identity.email,identity.avatar")
-                + "&state=" + state;
+                + "&state=" + state
+                + "&prompt=consent";
     }
 
     private User processSlackCallback(String code) {
