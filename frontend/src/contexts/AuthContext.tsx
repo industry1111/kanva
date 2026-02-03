@@ -1,23 +1,15 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { User, LoginRequest, SignUpRequest } from '../types/api';
+import type { User, OAuthCallbackRequest } from '../types/api';
 import { authApi, setTokens, clearTokens, getToken } from '../services/api';
 
-// TODO: 임시 개발용 - 인증 없이 API 테스트를 위한 Mock User
-const DEV_SKIP_AUTH = true;
-const MOCK_USER: User = {
-  id: 1,
-  email: 'dev@example.com',
-  name: '개발자',
-  role: 'USER',
-  createdAt: new Date().toISOString(),
-};
+const OAUTH_STATE_KEY = 'kanva_oauth_state';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (request: LoginRequest) => Promise<{ success: boolean; message?: string }>;
-  signUp: (request: SignUpRequest) => Promise<{ success: boolean; message?: string }>;
+  loginWithOAuth: (provider: string) => Promise<void>;
+  handleOAuthCallback: (provider: string, code: string, state: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
 }
 
@@ -29,13 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      // TODO: 임시 개발용 - 인증 스킵
-      if (DEV_SKIP_AUTH) {
-        setUser(MOCK_USER);
-        setIsLoading(false);
-        return;
-      }
-
       const token = getToken();
       if (token) {
         try {
@@ -55,9 +40,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  const login = async (request: LoginRequest) => {
+  const loginWithOAuth = async (provider: string) => {
     try {
-      const response = await authApi.login(request);
+      const response = await authApi.getOAuthLoginUrl(provider);
+      if (response.success) {
+        sessionStorage.setItem(OAUTH_STATE_KEY, response.data.state);
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.error('OAuth 로그인 URL 조회 실패:', error);
+    }
+  };
+
+  const handleOAuthCallback = async (provider: string, code: string, state: string) => {
+    const savedState = sessionStorage.getItem(OAUTH_STATE_KEY);
+    sessionStorage.removeItem(OAUTH_STATE_KEY);
+
+    if (savedState !== state) {
+      return { success: false, message: '유효하지 않은 인증 요청입니다.' };
+    }
+
+    try {
+      const request: OAuthCallbackRequest = { code, state };
+      const response = await authApi.oauthCallback(provider, request);
       if (response.success) {
         setTokens(response.data.accessToken, response.data.refreshToken);
         setUser(response.data.user);
@@ -65,19 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, message: response.message };
     } catch (error) {
-      return { success: false, message: '로그인 중 오류가 발생했습니다.' };
-    }
-  };
-
-  const signUp = async (request: SignUpRequest) => {
-    try {
-      const response = await authApi.signUp(request);
-      if (response.success) {
-        return { success: true };
-      }
-      return { success: false, message: response.message };
-    } catch (error) {
-      return { success: false, message: '회원가입 중 오류가 발생했습니다.' };
+      return { success: false, message: 'OAuth 인증 처리 중 오류가 발생했습니다.' };
     }
   };
 
@@ -92,8 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
-        login,
-        signUp,
+        loginWithOAuth,
+        handleOAuthCallback,
         logout,
       }}
     >

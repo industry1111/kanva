@@ -1,5 +1,6 @@
 package com.kanva.dto.user;
 
+import com.kanva.domain.user.OAuthProvider;
 import com.kanva.domain.user.Role;
 import com.kanva.domain.user.User;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,8 @@ public class UserResponse {
     private String email;
     private String name;
     private Role role;
+    private String picture;
+    private OAuthProvider oauthProvider;
     private LocalDateTime createdAt;
 
     public static UserResponse from(User user) {
@@ -26,6 +29,8 @@ public class UserResponse {
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole())
+                .picture(user.getPicture())
+                .oauthProvider(user.getOauthProvider())
                 .createdAt(user.getCreatedAt())
                 .build();
     }
