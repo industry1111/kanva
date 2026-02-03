@@ -6,6 +6,8 @@ import com.kanva.config.OAuthConfig;
 import com.kanva.domain.user.OAuthProvider;
 import com.kanva.domain.user.Role;
 import com.kanva.domain.user.User;
+import com.kanva.domain.user.UserOAuthConnection;
+import com.kanva.domain.user.UserOAuthConnectionRepository;
 import com.kanva.domain.user.UserRepository;
 import com.kanva.dto.auth.OAuthCallbackRequest;
 import com.kanva.dto.auth.OAuthLoginUrlResponse;
@@ -30,6 +32,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +45,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     private final OAuthConfig oAuthConfig;
     private final UserRepository userRepository;
+    private final UserOAuthConnectionRepository oauthConnectionRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -82,11 +86,13 @@ public class OAuthServiceImpl implements OAuthService {
                 user.getRole().name()
         );
 
+        List<OAuthProvider> connectedProviders = oauthConnectionRepository.findProvidersByUserId(user.getId());
+
         return LoginResponse.builder()
                 .accessToken(jwtToken.getAccessToken())
                 .refreshToken(jwtToken.getRefreshToken())
                 .tokenType(jwtToken.getGrantType())
-                .user(UserResponse.from(user))
+                .user(UserResponse.from(user, connectedProviders))
                 .build();
     }
 
@@ -319,31 +325,43 @@ public class OAuthServiceImpl implements OAuthService {
     // === 공통 ===
 
     private User findOrCreateUser(OAuthProvider provider, String providerId, String email, String name, String picture) {
-        return userRepository.findByOauthProviderAndOauthProviderId(provider, providerId)
-                .map(user -> {
-                    user.updateOAuthInfo(name, email, picture);
+        // 1. provider + providerId로 기존 연결 조회
+        return oauthConnectionRepository.findByProviderAndProviderId(provider, providerId)
+                .map(connection -> {
+                    User user = connection.getUser();
+                    user.updateName(name);
+                    user.updatePicture(picture);
+                    connection.updatePicture(picture);
                     return user;
                 })
                 .orElseGet(() -> {
-                    // 같은 이메일로 이미 가입된 계정이 있는지 확인
-                    return userRepository.findByEmail(email)
-                            .map(existingUser -> {
-                                // 기존 계정에 OAuth 정보 연결
-                                existingUser.linkOAuth(provider, providerId, picture);
-                                return existingUser;
-                            })
+                    // 2. 이메일로 기존 사용자 조회 또는 신규 생성
+                    User user = userRepository.findByEmail(email)
                             .orElseGet(() -> {
-                                // 신규 사용자 생성
-                                User newUser = User.oauthBuilder()
+                                User newUser = User.builder()
                                         .email(email)
                                         .name(name)
-                                        .oauthProvider(provider)
-                                        .oauthProviderId(providerId)
-                                        .picture(picture)
                                         .role(Role.USER)
+                                        .picture(picture)
                                         .build();
                                 return userRepository.save(newUser);
                             });
+
+                    // 3. 새 OAuth 연결 생성
+                    UserOAuthConnection connection = UserOAuthConnection.builder()
+                            .user(user)
+                            .provider(provider)
+                            .providerId(providerId)
+                            .picture(picture)
+                            .build();
+                    oauthConnectionRepository.save(connection);
+
+                    // 프로필 사진 업데이트 (기존 사용자인 경우에도)
+                    if (picture != null) {
+                        user.updatePicture(picture);
+                    }
+
+                    return user;
                 });
     }
 

@@ -22,7 +22,7 @@ export interface User {
   name: string;
   role: Role;
   picture?: string;
-  oauthProvider?: OAuthProvider;
+  connectedProviders: OAuthProvider[];
   createdAt: string;
 }
 

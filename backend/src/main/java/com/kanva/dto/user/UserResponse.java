@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -20,17 +21,17 @@ public class UserResponse {
     private String name;
     private Role role;
     private String picture;
-    private OAuthProvider oauthProvider;
+    private List<OAuthProvider> connectedProviders;
     private LocalDateTime createdAt;
 
-    public static UserResponse from(User user) {
+    public static UserResponse from(User user, List<OAuthProvider> connectedProviders) {
         return UserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole())
                 .picture(user.getPicture())
-                .oauthProvider(user.getOauthProvider())
+                .connectedProviders(connectedProviders)
                 .createdAt(user.getCreatedAt())
                 .build();
     }
