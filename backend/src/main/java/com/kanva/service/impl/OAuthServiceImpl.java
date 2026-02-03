@@ -3,6 +3,8 @@ package com.kanva.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kanva.config.OAuthConfig;
+import com.kanva.domain.slack.SlackConnection;
+import com.kanva.domain.slack.SlackConnectionRepository;
 import com.kanva.domain.user.OAuthProvider;
 import com.kanva.domain.user.Role;
 import com.kanva.domain.user.User;
@@ -46,6 +48,7 @@ public class OAuthServiceImpl implements OAuthService {
     private final OAuthConfig oAuthConfig;
     private final UserRepository userRepository;
     private final UserOAuthConnectionRepository oauthConnectionRepository;
+    private final SlackConnectionRepository slackConnectionRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -241,6 +244,7 @@ public class OAuthServiceImpl implements OAuthService {
         return "https://slack.com/oauth/v2/authorize"
                 + "?client_id=" + config.getClientId()
                 + "&redirect_uri=" + encode(config.getRedirectUri())
+                + "&scope=" + encode("chat:write,users:read")
                 + "&user_scope=" + encode("identity.basic,identity.email,identity.avatar")
                 + "&state=" + state
                 + "&prompt=consent";
@@ -248,18 +252,49 @@ public class OAuthServiceImpl implements OAuthService {
 
     private User processSlackCallback(String code) {
         JsonNode tokenResponse = exchangeSlackCode(code);
-        JsonNode userInfo = tokenResponse.get("authed_user");
+        JsonNode authedUser = tokenResponse.get("authed_user");
 
-        String userAccessToken = userInfo.get("access_token").asText();
+        String userAccessToken = authedUser.get("access_token").asText();
         JsonNode identity = getSlackIdentity(userAccessToken);
 
         JsonNode user = identity.get("user");
-        String providerId = user.get("id").asText();
+        String slackUserId = user.get("id").asText();
         String name = user.get("name").asText();
         String email = user.get("email").asText();
         String picture = user.has("image_192") ? user.get("image_192").asText() : null;
 
-        return findOrCreateUser(OAuthProvider.SLACK, providerId, email, name, picture);
+        // 봇 토큰 및 팀 정보 추출
+        String botToken = tokenResponse.has("access_token") ? tokenResponse.get("access_token").asText() : null;
+        JsonNode team = tokenResponse.get("team");
+        String teamId = team.get("id").asText();
+        String teamName = team.has("name") ? team.get("name").asText() : null;
+
+        User kanvaUser = findOrCreateUser(OAuthProvider.SLACK, slackUserId, email, name, picture);
+
+        // slack_connections 테이블에 저장/업데이트
+        saveOrUpdateSlackConnection(kanvaUser, slackUserId, teamId, teamName, botToken);
+
+        return kanvaUser;
+    }
+
+    private void saveOrUpdateSlackConnection(User user, String slackUserId, String teamId, String teamName, String botToken) {
+        SlackConnection connection = slackConnectionRepository.findByUserId(user.getId())
+                .map(existing -> {
+                    existing.updateBotToken(botToken);
+                    return existing;
+                })
+                .orElseGet(() -> SlackConnection.builder()
+                        .user(user)
+                        .slackUserId(slackUserId)
+                        .teamId(teamId)
+                        .teamName(teamName)
+                        .botToken(botToken)
+                        .notificationsEnabled(true)
+                        .build());
+
+        slackConnectionRepository.save(connection);
+        log.info("SlackConnection saved for user {}: slackUserId={}, teamId={}, hasBotToken={}",
+                user.getId(), slackUserId, teamId, botToken != null);
     }
 
     private JsonNode exchangeSlackCode(String code) {
