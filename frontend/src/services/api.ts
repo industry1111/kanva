@@ -14,7 +14,7 @@ import type {
   DashboardResponse,
 } from '../types/api';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://localhost:8080/api';
 
 // Token management
 const TOKEN_KEY = 'kanva_access_token';

@@ -1,7 +1,9 @@
 package com.kanva.service.impl;
 
+import com.kanva.domain.user.OAuthProvider;
 import com.kanva.domain.user.Role;
 import com.kanva.domain.user.User;
+import com.kanva.domain.user.UserOAuthConnectionRepository;
 import com.kanva.domain.user.UserRepository;
 import com.kanva.dto.user.LoginRequest;
 import com.kanva.dto.user.LoginResponse;
@@ -18,12 +20,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.List;
+
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserOAuthConnectionRepository oauthConnectionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -42,7 +48,7 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        return UserResponse.from(savedUser);
+        return UserResponse.from(savedUser, Collections.emptyList());
     }
 
     @Override
@@ -57,20 +63,23 @@ public class UserServiceImpl implements UserService {
         String authorities = "ROLE_" + user.getRole().name();
         JwtToken jwtToken = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), authorities);
 
-        return LoginResponse.of(jwtToken, UserResponse.from(user));
+        List<OAuthProvider> connectedProviders = oauthConnectionRepository.findProvidersByUserId(user.getId());
+        return LoginResponse.of(jwtToken, UserResponse.from(user, connectedProviders));
     }
 
     @Override
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        return UserResponse.from(user);
+        List<OAuthProvider> connectedProviders = oauthConnectionRepository.findProvidersByUserId(userId);
+        return UserResponse.from(user, connectedProviders);
     }
 
     @Override
     public UserResponse getCurrentUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
-        return UserResponse.from(user);
+        List<OAuthProvider> connectedProviders = oauthConnectionRepository.findProvidersByUserId(user.getId());
+        return UserResponse.from(user, connectedProviders);
     }
 }

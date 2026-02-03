@@ -5,8 +5,12 @@ plugins {
 }
 
 group = 'com.kanva'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0'
 description = 'kanva'
+
+bootJar {
+    archiveBaseName = 'kanva'
+}
 
 java {
     toolchain {
