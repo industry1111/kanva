@@ -190,15 +190,31 @@ Slack 연동 정보는 알림 기능에 활용합니다.
 
 ## Project Structure
 
-### Backend
-com.kanva
-├─ auth.oauth.provider # OAuth Provider Adapter
-├─ common # 공통 유틸 / 응답 포맷
-├─ config # 설정 클래스
-├─ controller # REST API Controller
-├─ domain # Entity / Repository
-├─ dto # DTO
-├─ exception # 예외 처리
-├─ scheduler # 스케줄러
-├─ security # JWT / Security
-└─ service # 비즈니스 로직
+```
+kanva/
+├── backend/src/main/java/com/kanva/
+│   ├── auth/oauth/provider/    # OAuth Provider Adapter 패턴
+│   ├── common/                 # ApiResponse, ErrorCode
+│   ├── config/                 # Security, Clock, JPA Config
+│   ├── controller/             # REST Controllers
+│   │   └── report/             # AI Report Controller
+│   ├── domain/                 # Entities + Repositories
+│   │   └── report/             # AIReport, ReportStatus, ReportFeedback
+│   ├── dto/                    # Request/Response DTOs
+│   ├── exception/              # Global Exception Handler
+│   ├── scheduler/              # TaskSeries, Notification Schedulers
+│   ├── security/               # JWT Provider, Filter
+│   └── service/
+│       ├── impl/               # Service 구현체
+│       └── report/             # AIAnalysisService (확장 가능 구조)
+│
+└── frontend/src/
+    ├── components/
+    │   ├── dashboard/          # TaskStats, ProductivityChart, AIReportCard
+    │   └── report/             # InsightCard, RecommendationCard, FeedbackButton
+    ├── contexts/               # AuthContext (OAuth 상태 관리)
+    ├── pages/                  # Workspace, Dashboard, AIReportPage
+    ├── services/               # API Client (fetchWithAuth)
+    └── types/                  # TypeScript 타입 정의
+```
+
