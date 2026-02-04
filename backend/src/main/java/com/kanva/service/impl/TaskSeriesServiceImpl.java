@@ -149,47 +149,6 @@ public class TaskSeriesServiceImpl implements TaskSeriesService {
 
     @Override
     @Transactional
-    public void generateTodayTasks() {
-        LocalDate today = LocalDate.now(clock);
-        log.info("Starting daily task generation for date: {}", today);
-
-        List<TaskSeries> seriesList = taskSeriesRepository.findGeneratableSeriesForDate(today);
-        log.info("Found {} generatable series for today", seriesList.size());
-
-        int createdCount = 0;
-        int skippedCount = 0;
-
-        for (TaskSeries series : seriesList) {
-            // 제외된 날짜인지 확인
-            if (excludedDateRepository.existsByIdTaskSeriesIdAndIdDate(series.getId(), today)) {
-                log.debug("Date {} is excluded for series {}", today, series.getId());
-                skippedCount++;
-                continue;
-            }
-
-            // 이미 해당 날짜에 인스턴스가 존재하는지 확인
-            if (taskRepository.existsBySeries_IdAndTaskDate(series.getId(), today)) {
-                log.debug("Task already exists for series {} on {}", series.getId(), today);
-                skippedCount++;
-                continue;
-            }
-
-            // Entity에서 한번 더 확인
-            if (!series.canGenerateFor(today)) {
-                log.debug("Series {} cannot generate for {}", series.getId(), today);
-                skippedCount++;
-                continue;
-            }
-
-            createTaskInstance(series, today);
-            createdCount++;
-        }
-
-        log.info("Daily task generation completed. Created: {}, Skipped: {}", createdCount, skippedCount);
-    }
-
-    @Override
-    @Transactional
     public int handleTaskCompletion(Task task) {
         if (!task.isSeriesTask()) {
             return 0;

@@ -66,16 +66,6 @@ public class TaskSeriesController {
     }
 
     /**
-     * 수동으로 오늘 Task 생성 트리거 (테스트/디버그용)
-     * POST /api/task-series/generate
-     */
-    @PostMapping("/generate")
-    public ResponseEntity<ApiResponse<String>> generateTodayTasks() {
-        taskSeriesService.generateTodayTasks();
-        return ResponseEntity.ok(ApiResponse.ok("오늘 Task 생성 완료"));
-    }
-
-    /**
      * 시리즈에서 특정 날짜 제외
      * POST /api/task-series/{id}/exclude
      */
