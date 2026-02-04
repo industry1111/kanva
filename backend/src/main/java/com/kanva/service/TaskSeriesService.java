@@ -44,11 +44,6 @@ public interface TaskSeriesService {
     void generateTasksForDate(Long userId, LocalDate date);
 
     /**
-     * 스케줄러용: 오늘 날짜의 모든 사용자 시리즈 Task 생성 (fallback)
-     */
-    void generateTodayTasks();
-
-    /**
      * Task 완료 시 시리즈 처리
      * - COMPLETE_STOPS_SERIES: stopDate 설정 + 미래 인스턴스 삭제
      * - PER_OCCURRENCE: 아무 작업 없음
