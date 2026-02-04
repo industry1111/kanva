@@ -76,6 +76,20 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ErrorCode.OAUTH_FAILED, e.getMessage()));
     }
 
+    @ExceptionHandler(ReportNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReportNotFoundException(ReportNotFoundException e) {
+        log.error("ReportNotFoundException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail(ErrorCode.REPORT_NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(ReportGenerationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReportGenerationException(ReportGenerationException e) {
+        log.error("ReportGenerationException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.fail(ErrorCode.REPORT_GENERATION_FAILED, e.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.error("MethodArgumentNotValidException: {}", e.getMessage());

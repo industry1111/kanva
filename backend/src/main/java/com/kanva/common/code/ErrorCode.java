@@ -23,12 +23,14 @@ public enum ErrorCode {
     USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
     DAILY_NOTE_NOT_FOUND(404, "노트를 찾을 수 없습니다."),
     TASK_NOT_FOUND(404, "할 일을 찾을 수 없습니다."),
+    REPORT_NOT_FOUND(404, "리포트를 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다."),
 
     // 500 Internal Server Error
-    INTERNAL_ERROR(500, "서버 내부 오류가 발생했습니다.");
+    INTERNAL_ERROR(500, "서버 내부 오류가 발생했습니다."),
+    REPORT_GENERATION_FAILED(500, "리포트 생성에 실패했습니다.");
 
     private final int status;
     private final String message;

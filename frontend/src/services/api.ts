@@ -13,6 +13,14 @@ import type {
   DailyNoteSummary,
   DashboardResponse,
 } from '../types/api';
+import type {
+  AIReportSummary,
+  AIReport,
+  AIReportDetail,
+  AIReportRequest,
+  ReportFeedbackRequest,
+  PageResponse,
+} from '../types/report';
 
 const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://localhost:8080/api';
 
@@ -185,5 +193,34 @@ export const taskSeriesApi = {
 export const dashboardApi = {
   get: async (month: string): Promise<ApiResponse<DashboardResponse>> => {
     return fetchWithAuth(`/dashboard?month=${month}`);
+  },
+};
+
+// Report API
+export const reportApi = {
+  getSummary: async (): Promise<ApiResponse<AIReportSummary>> => {
+    return fetchWithAuth('/reports/summary');
+  },
+
+  generate: async (request: AIReportRequest): Promise<ApiResponse<AIReport>> => {
+    return fetchWithAuth('/reports', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  getDetail: async (reportId: number): Promise<ApiResponse<AIReportDetail>> => {
+    return fetchWithAuth(`/reports/${reportId}`);
+  },
+
+  getHistory: async (page: number = 0, size: number = 10): Promise<ApiResponse<PageResponse<AIReport>>> => {
+    return fetchWithAuth(`/reports?page=${page}&size=${size}`);
+  },
+
+  submitFeedback: async (reportId: number, request: ReportFeedbackRequest): Promise<ApiResponse<void>> => {
+    return fetchWithAuth(`/reports/${reportId}/feedback`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
   },
 };

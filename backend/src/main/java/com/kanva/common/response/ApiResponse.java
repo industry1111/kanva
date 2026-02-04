@@ -20,6 +20,11 @@ public class ApiResponse<T> {
     private final String message;
     private final List<FieldError> errors;
 
+    // 성공 응답 - 데이터 없음
+    public static ApiResponse<Void> ok() {
+        return new ApiResponse<>(true, null, SuccessCode.SELECT_SUCCESS.getStatus(), SuccessCode.SELECT_SUCCESS.getMessage(), null);
+    }
+
     // 성공 응답 - 데이터 포함
     public static <T> ApiResponse<T> ok(T data) {
         return new ApiResponse<>(true, data, SuccessCode.SELECT_SUCCESS.getStatus(), SuccessCode.SELECT_SUCCESS.getMessage(), null);
