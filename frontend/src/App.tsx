@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import DailyWorkspacePage from './pages/DailyWorkspacePage';
 import DashboardPage from './pages/DashboardPage';
+import AIReportPage from './pages/AIReportPage';
 import LoginPage from './pages/LoginPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 
-type Page = 'workspace' | 'dashboard';
+type Page = 'workspace' | 'dashboard' | 'report';
 
 function getOAuthProvider(): string | null {
   const path = window.location.pathname;
@@ -60,8 +61,19 @@ function AppContent() {
         >
           Dashboard
         </button>
+        <button
+          onClick={() => setCurrentPage('report')}
+          style={{
+            ...styles.navButton,
+            ...(currentPage === 'report' ? styles.navButtonActive : {}),
+          }}
+        >
+          Report
+        </button>
       </nav>
-      {currentPage === 'workspace' ? <DailyWorkspacePage /> : <DashboardPage />}
+      {currentPage === 'workspace' && <DailyWorkspacePage />}
+      {currentPage === 'dashboard' && <DashboardPage onNavigateToReport={() => setCurrentPage('report')} />}
+      {currentPage === 'report' && <AIReportPage />}
     </div>
   );
 }
