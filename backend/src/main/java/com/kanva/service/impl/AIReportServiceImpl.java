@@ -13,7 +13,10 @@ import com.kanva.exception.ReportNotFoundException;
 import com.kanva.exception.UserNotFoundException;
 import com.kanva.service.AIReportService;
 import com.kanva.service.report.AIAnalysisService;
+import com.kanva.service.report.GeminiClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,16 +29,44 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AIReportServiceImpl implements AIReportService {
 
     private final AIReportRepository aiReportRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
-    private final AIAnalysisService aiAnalysisService;
+    private final AIAnalysisService geminiAnalysisService;
+    private final AIAnalysisService mockAnalysisService;
+    private final GeminiClient geminiClient;
     private final Clock clock;
+
+    public AIReportServiceImpl(
+            AIReportRepository aiReportRepository,
+            TaskRepository taskRepository,
+            UserRepository userRepository,
+            @Qualifier("geminiAIAnalysisService") AIAnalysisService geminiAnalysisService,
+            @Qualifier("mockAIAnalysisService") AIAnalysisService mockAnalysisService,
+            GeminiClient geminiClient,
+            Clock clock) {
+        this.aiReportRepository = aiReportRepository;
+        this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
+        this.geminiAnalysisService = geminiAnalysisService;
+        this.mockAnalysisService = mockAnalysisService;
+        this.geminiClient = geminiClient;
+        this.clock = clock;
+    }
+
+    private AIAnalysisService getAnalysisService() {
+        if (geminiClient.isAvailable()) {
+            log.info("Using Gemini AI Analysis Service");
+            return geminiAnalysisService;
+        }
+        log.info("Using Mock AI Analysis Service (Gemini not configured)");
+        return mockAnalysisService;
+    }
 
     @Override
     public AIReportSummaryResponse getWeeklySummary(Long userId) {
@@ -91,7 +122,7 @@ public class AIReportServiceImpl implements AIReportService {
             List<Task> previousTasks = taskRepository.findByUserIdAndDateRange(userId, prevStart, prevEnd);
 
             // AI 분석 수행
-            AIAnalysisService.AnalysisResult result = aiAnalysisService.analyze(currentTasks, previousTasks);
+            AIAnalysisService.AnalysisResult result = getAnalysisService().analyze(currentTasks, previousTasks);
 
             // 결과 저장
             report.complete(
