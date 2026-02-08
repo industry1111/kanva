@@ -124,6 +124,15 @@ public class AIReportServiceImpl implements AIReportService {
             // DailyNote 조회
             List<DailyNote> dailyNotes = dailyNoteRepository.findByUserIdAndDateRange(userId, start, end);
 
+            // 이전 기간 Task가 없으면 이전 리포트의 completionRate로 트렌드 비교
+            Integer previousReportCompletionRate = null;
+            if (previousTasks.isEmpty()) {
+                previousReportCompletionRate = aiReportRepository
+                        .findLatestCompletedByUserAndType(userId, periodType)
+                        .map(AIReport::getCompletionRate)
+                        .orElse(null);
+            }
+
             // AnalysisContext 구성
             AIAnalysisService.AnalysisContext context = AIAnalysisService.AnalysisContext.builder()
                     .currentTasks(currentTasks)
@@ -131,6 +140,7 @@ public class AIReportServiceImpl implements AIReportService {
                     .dailyNotes(dailyNotes)
                     .periodType(periodType)
                     .tone(tone != null ? tone : "ENCOURAGING")
+                    .previousReportCompletionRate(previousReportCompletionRate)
                     .build();
 
             // AI 분석 수행

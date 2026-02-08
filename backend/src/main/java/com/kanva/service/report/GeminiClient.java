@@ -50,6 +50,17 @@ public class GeminiClient {
         generationConfig.put("topP", 0.95);
         generationConfig.put("responseMimeType", "application/json");
 
+        // responseSchema로 JSON 구조 강제 (summary, insights, recommendations 필수)
+        Map<String, Object> responseSchema = new java.util.HashMap<>();
+        responseSchema.put("type", "OBJECT");
+        responseSchema.put("properties", Map.of(
+                "summary", Map.of("type", "STRING"),
+                "insights", Map.of("type", "STRING"),
+                "recommendations", Map.of("type", "STRING")
+        ));
+        responseSchema.put("required", List.of("summary", "insights", "recommendations"));
+        generationConfig.put("responseSchema", responseSchema);
+
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                         Map.of("parts", List.of(
