@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 public class GeminiConfig {
 
     private String apiKey;
-    private String model = "gemini-2.5-pro";
+    private String model = "gemini-2.5-flash";
     private String baseUrl = "https://generativelanguage.googleapis.com/v1beta";
     private boolean enabled = false;
 
