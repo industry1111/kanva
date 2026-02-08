@@ -46,7 +46,7 @@ public class GeminiClient {
 
         Map<String, Object> generationConfig = new java.util.HashMap<>();
         generationConfig.put("temperature", 0.7);
-        generationConfig.put("maxOutputTokens", 2048);
+        generationConfig.put("maxOutputTokens", 8192);
         generationConfig.put("topP", 0.95);
         generationConfig.put("responseMimeType", "application/json");
 
