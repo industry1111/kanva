@@ -264,7 +264,8 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
 
         prompt.append("insights (3~5개, 줄바꿈 구분, '• '로 시작):\n");
         prompt.append("- 숫자 나열이 아니라, 패턴이나 의미를 해석해주세요\n");
-        prompt.append("- 요일별 흐름, 반복 항목 달성률, 노트에서 읽히는 감정 등\n\n");
+        prompt.append("- 요일별 흐름, 반복 항목 달성률, 카테고리별 완료율 등 관찰 가능한 사실 중심\n");
+        prompt.append("- 노트에 직접 적힌 내용만 언급 가능 (감정/의도를 추측하지 말 것)\n\n");
 
         prompt.append("recommendations (3~5개, 줄바꿈 구분, '• '로 시작):\n");
         prompt.append("- 이 사용자의 실제 데이터에 기반한 구체적 제안만\n");
@@ -277,6 +278,8 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         prompt.append("- 프롬프트의 구조를 그대로 반복하지 마세요. 자기 말로 풀어쓰세요\n");
         prompt.append("- summary에 모든 내용 몰아넣기 금지\n");
         prompt.append("- 빈 문자열 반환 금지\n");
+        prompt.append("- Task 상태(진행 중, 미완료 등)에서 사용자의 심리, 의도, 자기 인식을 추측하지 마세요. '진행 중'은 단순히 시작했다는 의미일 뿐입니다.\n");
+        prompt.append("- 데이터에 명시적으로 드러나지 않는 내용을 추론하지 마세요. 관찰 가능한 사실(완료율, 패턴, 빈도, 날짜별 분포)에만 기반하세요.\n");
         prompt.append("- [중요] '이전 대비'가 '없음'인 경우 이것은 사용자의 첫 번째 리포트입니다. ");
         prompt.append("이전 주/이전 기간과 비교하는 문장을 절대 만들지 마세요. ");
         prompt.append("'지난주보다', '이전보다', '전주 대비' 같은 비교 표현을 사용하지 마세요. ");
