@@ -143,7 +143,11 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         // 전체 통계
         prompt.append("\n## 통계\n");
         prompt.append(String.format("- 전체: %d개 / 완료: %d개 / 완료율: %d%%\n", totalTasks, completedTasks, completionRate));
-        prompt.append(String.format("- 이전 대비: %s\n", trend));
+        if ("NEW".equals(trend)) {
+            prompt.append("- 이전 대비: 없음 (첫 번째 리포트 — 비교할 이전 기간 데이터가 전혀 없습니다)\n");
+        } else {
+            prompt.append(String.format("- 이전 대비: %s\n", trend));
+        }
 
         // 일자별 데이터
         List<DailyNote> dailyNotes = context.getDailyNotes();
@@ -272,7 +276,11 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         prompt.append("- 데이터를 기계적으로 나열하지 마세요. 해석하고 의미를 붙여주세요\n");
         prompt.append("- 프롬프트의 구조를 그대로 반복하지 마세요. 자기 말로 풀어쓰세요\n");
         prompt.append("- summary에 모든 내용 몰아넣기 금지\n");
-        prompt.append("- 빈 문자열 반환 금지\n\n");
+        prompt.append("- 빈 문자열 반환 금지\n");
+        prompt.append("- [중요] '이전 대비'가 '없음'인 경우 이것은 사용자의 첫 번째 리포트입니다. ");
+        prompt.append("이전 주/이전 기간과 비교하는 문장을 절대 만들지 마세요. ");
+        prompt.append("'지난주보다', '이전보다', '전주 대비' 같은 비교 표현을 사용하지 마세요. ");
+        prompt.append("대신 이번 기간 자체의 성과에만 집중하세요.\n\n");
 
         // few-shot (자연스러운 대화체)
         prompt.append("## 출력 예시 (이 톤과 자연스러움을 참고하세요)\n");
