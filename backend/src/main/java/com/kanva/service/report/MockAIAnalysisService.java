@@ -27,7 +27,7 @@ public class MockAIAnalysisService implements AIAnalysisService {
                 ? (int) Math.round((double) completedTasks / totalTasks * 100)
                 : 0;
 
-        String trend = calculateTrend(tasks, previousPeriodTasks);
+        String trend = calculateTrend(tasks, previousPeriodTasks, context.getPreviousReportCompletionRate());
         boolean isStrict = "STRICT".equals(context.getTone());
         String summary = generateSummary(totalTasks, completedTasks, completionRate, trend, isStrict);
         String insights = generateInsights(tasks);
@@ -44,23 +44,34 @@ public class MockAIAnalysisService implements AIAnalysisService {
                 .build();
     }
 
-    private String calculateTrend(List<Task> currentTasks, List<Task> previousTasks) {
-        if (previousTasks == null || previousTasks.isEmpty()) {
-            return "NEW";
-        }
-
+    private String calculateTrend(List<Task> currentTasks, List<Task> previousTasks,
+                                   Integer previousReportCompletionRate) {
         int currentTotal = currentTasks.size();
         int currentCompleted = (int) currentTasks.stream()
                 .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
                 .count();
         int currentRate = currentTotal > 0 ? (int) Math.round((double) currentCompleted / currentTotal * 100) : 0;
 
-        int prevTotal = previousTasks.size();
-        int prevCompleted = (int) previousTasks.stream()
-                .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
-                .count();
-        int prevRate = prevTotal > 0 ? (int) Math.round((double) prevCompleted / prevTotal * 100) : 0;
+        // 1. 이전 기간 Task 데이터가 있으면 직접 비교
+        if (previousTasks != null && !previousTasks.isEmpty()) {
+            int prevTotal = previousTasks.size();
+            int prevCompleted = (int) previousTasks.stream()
+                    .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
+                    .count();
+            int prevRate = prevTotal > 0 ? (int) Math.round((double) prevCompleted / prevTotal * 100) : 0;
+            return compareTrend(currentRate, prevRate);
+        }
 
+        // 2. 이전 리포트의 completionRate로 비교
+        if (previousReportCompletionRate != null) {
+            return compareTrend(currentRate, previousReportCompletionRate);
+        }
+
+        // 3. 비교 대상 없음
+        return "NEW";
+    }
+
+    private String compareTrend(int currentRate, int prevRate) {
         int diff = currentRate - prevRate;
         if (diff > 5) {
             return "UP";

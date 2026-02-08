@@ -29,7 +29,7 @@ function getTrendText(trend?: string): string {
     case 'STABLE':
       return '유지 중';
     case 'NEW':
-      return '첫 리포트';
+      return '데이터 수집 중';
     default:
       return '-';
   }
@@ -181,6 +181,9 @@ export default function AIReportPage() {
               {getTrendText(currentReport.trend)}
             </span>
             <span className="report-stat-label">트렌드</span>
+            {currentReport.trend === 'NEW' && (
+              <span className="report-stat-sublabel">다음 리포트부터 비교됩니다</span>
+            )}
           </div>
         </div>
 

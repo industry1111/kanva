@@ -38,4 +38,14 @@ public interface AIReportRepository extends JpaRepository<AIReport, Long> {
      */
     Page<AIReport> findByUserIdAndStatusOrderByCreatedAtDesc(
             Long userId, ReportStatus status, Pageable pageable);
+
+    /**
+     * 사용자의 특정 기간 타입 최신 완료 리포트 (트렌드 비교용)
+     */
+    @Query("SELECT r FROM AIReport r WHERE r.user.id = :userId " +
+            "AND r.periodType = :periodType AND r.status = 'COMPLETED' " +
+            "ORDER BY r.createdAt DESC LIMIT 1")
+    Optional<AIReport> findLatestCompletedByUserAndType(
+            @Param("userId") Long userId,
+            @Param("periodType") ReportPeriodType periodType);
 }

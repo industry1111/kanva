@@ -30,6 +30,7 @@ public interface AIAnalysisService {
         private List<DailyNote> dailyNotes;
         private ReportPeriodType periodType;
         private String tone; // ENCOURAGING or STRICT
+        private Integer previousReportCompletionRate; // 이전 리포트의 완료율 (이전 기간 Task가 없을 때 사용)
     }
 
     AnalysisResult analyze(AnalysisContext context);

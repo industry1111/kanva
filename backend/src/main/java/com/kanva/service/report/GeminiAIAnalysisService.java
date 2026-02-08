@@ -44,7 +44,7 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         int completionRate = totalTasks > 0
                 ? (int) Math.round((double) completedTasks / totalTasks * 100)
                 : 0;
-        String trend = calculateTrend(tasks, previousPeriodTasks);
+        String trend = calculateTrend(tasks, previousPeriodTasks, context.getPreviousReportCompletionRate());
 
         // Gemini API 사용 불가 시 fallback
         if (!geminiClient.isAvailable()) {
@@ -64,23 +64,41 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         }
     }
 
-    private String calculateTrend(List<Task> currentTasks, List<Task> previousTasks) {
-        if (previousTasks == null || previousTasks.isEmpty()) {
-            return "NEW";
+    private String calculateTrend(List<Task> currentTasks, List<Task> previousTasks,
+                                   Integer previousReportCompletionRate) {
+        // 1. 이전 기간 Task 데이터가 있으면 직접 비교
+        if (previousTasks != null && !previousTasks.isEmpty()) {
+            int currentTotal = currentTasks.size();
+            int currentCompleted = (int) currentTasks.stream()
+                    .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
+                    .count();
+            int currentRate = currentTotal > 0 ? (int) Math.round((double) currentCompleted / currentTotal * 100) : 0;
+
+            int prevTotal = previousTasks.size();
+            int prevCompleted = (int) previousTasks.stream()
+                    .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
+                    .count();
+            int prevRate = prevTotal > 0 ? (int) Math.round((double) prevCompleted / prevTotal * 100) : 0;
+
+            return compareTrend(currentRate, prevRate);
         }
 
-        int currentTotal = currentTasks.size();
-        int currentCompleted = (int) currentTasks.stream()
-                .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
-                .count();
-        int currentRate = currentTotal > 0 ? (int) Math.round((double) currentCompleted / currentTotal * 100) : 0;
+        // 2. 이전 리포트의 completionRate가 있으면 그걸로 비교
+        if (previousReportCompletionRate != null) {
+            int currentTotal = currentTasks.size();
+            int currentCompleted = (int) currentTasks.stream()
+                    .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
+                    .count();
+            int currentRate = currentTotal > 0 ? (int) Math.round((double) currentCompleted / currentTotal * 100) : 0;
 
-        int prevTotal = previousTasks.size();
-        int prevCompleted = (int) previousTasks.stream()
-                .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
-                .count();
-        int prevRate = prevTotal > 0 ? (int) Math.round((double) prevCompleted / prevTotal * 100) : 0;
+            return compareTrend(currentRate, previousReportCompletionRate);
+        }
 
+        // 3. 비교 대상 없음
+        return "NEW";
+    }
+
+    private String compareTrend(int currentRate, int prevRate) {
         int diff = currentRate - prevRate;
         if (diff > 5) {
             return "UP";
@@ -95,21 +113,24 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
                                        int completedTasks, int completionRate, String trend) {
         StringBuilder prompt = new StringBuilder();
 
-        // 톤 설정
+        // 톤 설정 (구체적 행동 지침)
         boolean isStrict = "STRICT".equals(context.getTone());
         if (isStrict) {
-            prompt.append("당신은 직설적이고 엄격한 생산성 코치입니다. ");
-            prompt.append("칭찬보다는 냉정한 현실 직시를 돕고, 변명 없이 행동을 촉구하는 스타일입니다. ");
-            prompt.append("단, 인격 모독이 아니라 성장을 위한 채찍질이어야 합니다.\n\n");
+            prompt.append("당신은 냉철한 성과 관리자입니다.\n");
+            prompt.append("규칙:\n");
+            prompt.append("- 데이터에 기반한 팩트만 전달하세요\n");
+            prompt.append("- 칭찬은 최소화하고, 미완료 Task와 비효율적 패턴을 날카롭게 지적하세요\n");
+            prompt.append("- '~해야 합니다', '~하지 마세요' 형식의 직접적 명령어를 사용하세요\n");
+            prompt.append("- 감정적 위로 없이 냉정하게 분석하세요\n\n");
         } else {
-            prompt.append("당신은 따뜻하고 격려하는 생산성 코치입니다. ");
-            prompt.append("사용자의 노력을 인정하고, 작은 성과도 칭찬하며, 개선점은 부드럽게 제안합니다. ");
-            prompt.append("사용자가 동기부여를 받을 수 있도록 응원해주세요.\n\n");
+            prompt.append("당신은 사용자의 코칭 파트너입니다.\n");
+            prompt.append("규칙:\n");
+            prompt.append("- 구체적인 성과를 짚어서 칭찬하세요 (예: '매일 빠짐없이 알고리즘 문제를 푼 건 대단합니다')\n");
+            prompt.append("- 개선점은 '~하면 더 좋을 것 같아요' 형식으로 부드럽게 제안하세요\n");
+            prompt.append("- 사용자의 노력과 성장을 인정하는 따뜻한 톤을 유지하세요\n\n");
         }
 
-        prompt.append("아래는 사용자의 생산성 데이터입니다. ");
-        prompt.append("데일리 노트(일기/메모)와 할 일(Task) 데이터를 종합적으로 분석하여, ");
-        prompt.append("이 사용자가 어떤 사람인지 이해하고 맞춤형 피드백을 제공해주세요.\n\n");
+        prompt.append("아래 사용자의 생산성 데이터를 분석하여 맞춤형 피드백을 JSON으로 제공하세요.\n\n");
 
         // 기간 정보
         prompt.append(String.format("## 분석 기간: %s 리포트\n",
@@ -240,24 +261,48 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
             prompt.append(String.format("- 총 할 일: %d개, 완료: %d개, 완료율: %d%%\n", prevTotal, prevCompleted, prevRate));
         }
 
-        // 분석 가이드라인
-        prompt.append("\n## 분석 가이드라인\n");
-        prompt.append("- 데일리 노트 내용을 읽고 사용자의 관심사, 고민, 감정 상태를 파악하세요\n");
-        prompt.append("- Task의 제목과 설명에서 사용자가 어떤 분야에서 활동하는지 이해하세요\n");
-        prompt.append("- 반복 Task의 완료 패턴에서 습관 형성 여부를 분석하세요\n");
-        prompt.append("- 지연된 Task가 있다면 그 원인을 데일리 노트와 연결지어 분석하세요\n");
-        prompt.append("- 숫자 나열이 아닌, 이 사용자에게 실질적으로 도움이 되는 맞춤형 조언을 하세요\n\n");
+        // 응답 형식 (code fence 없이, 필드별 상세 요구사항)
+        prompt.append("\n## 응답 규칙\n");
+        prompt.append("아래 3개 필드를 가진 JSON 객체를 반환하세요. 모든 필드는 반드시 내용을 채워야 합니다.\n\n");
 
-        // 응답 형식
-        prompt.append("## 응답 형식\n");
-        prompt.append("반드시 아래 JSON 형식으로만 응답해주세요. 다른 텍스트 없이 JSON만 출력하세요:\n");
-        prompt.append("```json\n");
+        prompt.append("**summary** (필수, 3~5문장):\n");
+        prompt.append("- 반드시 실제 Task 제목을 1개 이상 언급하세요 (예: '알고리즘 1day 1commit')\n");
+        prompt.append("- 데일리 노트에 적힌 내용이 있다면 반드시 반영하세요\n");
+        prompt.append("- 완료율 수치와 그 의미를 해석하세요\n\n");
+
+        prompt.append("**insights** (필수, 불릿포인트 3~5개):\n");
+        prompt.append("- 각 불릿은 줄바꿈(\\n)으로 구분하고, '• '로 시작하세요\n");
+        prompt.append("- 각 인사이트마다 구체적 데이터 근거를 포함하세요 (Task명, 날짜, 완료율 등)\n");
+        prompt.append("- 요일별/시간별 패턴, 반복 Task 완료 패턴, 노트에서 발견한 감정/관심사를 분석하세요\n");
+        prompt.append("- 통계 섹션과 동일한 숫자만 반복하지 마세요\n\n");
+
+        prompt.append("**recommendations** (필수, 불릿포인트 3~5개):\n");
+        prompt.append("- 각 불릿은 줄바꿈(\\n)으로 구분하고, '• '로 시작하세요\n");
+        prompt.append("- 동사로 시작하는 실행 가능한 조언만 적으세요\n");
+        prompt.append("- 이 사용자의 실제 Task와 노트 데이터에 기반한 맞춤 조언이어야 합니다\n");
+        prompt.append("- '일찍 일어나세요' 같은 일반적 생산성 팁은 금지합니다\n\n");
+
+        prompt.append("**금지사항**:\n");
+        prompt.append("- '전체적으로 잘하고 계십니다' 같은 모호한 평가 금지\n");
+        prompt.append("- 빈 문자열(\"\") 반환 금지. 모든 필드에 반드시 내용을 채우세요\n");
+        prompt.append("- summary에 모든 내용을 몰아넣지 마세요. insights와 recommendations에 각각 다른 내용을 작성하세요\n\n");
+
+        // few-shot 예시
+        prompt.append("## 출력 예시\n");
         prompt.append("{\n");
-        prompt.append("  \"summary\": \"전체 분석 요약 (3-5문장, 한국어, 데일리 노트 내용을 반영한 맞춤형 분석)\",\n");
-        prompt.append("  \"insights\": \"주요 인사이트 (불릿포인트 형식, 각 줄 '• '로 시작, 3-5개, 한국어)\",\n");
-        prompt.append("  \"recommendations\": \"구체적인 개선 권장사항 (불릿포인트 형식, 각 줄 '• '로 시작, 3-5개, 한국어)\"\n");
+        prompt.append("  \"summary\": \"이번 주에 총 12개의 할 일 중 9개를 완료하여 75%의 완료율을 기록했습니다. ");
+        prompt.append("특히 '알고리즘 1day 1commit'을 매일 빠짐없이 수행한 점이 인상적입니다. ");
+        prompt.append("데일리 노트에서 '면접 준비가 걱정된다'고 적었는데, 실제로 이력서 관련 Task를 3개 완료하며 행동으로 옮기고 있습니다. ");
+        prompt.append("다만 '운동하기' Task가 3일 연속 미완료 상태입니다.\",\n");
+        prompt.append("  \"insights\": \"• '알고리즘 1day 1commit' 반복 Task의 완료율이 100%로, 코딩 습관이 완전히 자리잡았습니다\\n");
+        prompt.append("• 화요일과 수요일에 Task 완료가 집중되어 있고, 목금은 완료율이 낮습니다\\n");
+        prompt.append("• 데일리 노트에 '피곤하다'는 표현이 3회 등장하여 체력 관리가 생산성에 영향을 주고 있습니다\\n");
+        prompt.append("• '운동하기' Task는 등록만 하고 한 번도 완료하지 않아 목표 재설정이 필요합니다\",\n");
+        prompt.append("  \"recommendations\": \"• 목금의 에너지 저하 패턴을 고려해 중요한 Task는 화수에 배치하세요\\n");
+        prompt.append("• '운동하기'를 '10분 스트레칭'으로 목표를 축소하면 완료 확률이 높아집니다\\n");
+        prompt.append("• 면접 준비 Task를 시리즈(반복)로 만들어 매일 30분씩 진행해보세요\\n");
+        prompt.append("• 노트에 '오늘 잘한 일 1가지' 섹션을 추가하면 동기부여에 도움됩니다\"\n");
         prompt.append("}\n");
-        prompt.append("```\n");
 
         return prompt.toString();
     }
@@ -271,6 +316,20 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
             String summary = rootNode.has("summary") ? rootNode.get("summary").asText() : "";
             String insights = rootNode.has("insights") ? rootNode.get("insights").asText() : "";
             String recommendations = rootNode.has("recommendations") ? rootNode.get("recommendations").asText() : "";
+
+            // fallback: Gemini가 빈값을 반환한 경우 기본 내용 생성
+            if (summary == null || summary.isBlank()) {
+                log.warn("Gemini returned empty summary, generating fallback");
+                summary = generateFallbackSummary(totalTasks, completedTasks, completionRate);
+            }
+            if (insights == null || insights.isBlank()) {
+                log.warn("Gemini returned empty insights, generating fallback");
+                insights = generateFallbackInsights(totalTasks, completedTasks, completionRate);
+            }
+            if (recommendations == null || recommendations.isBlank()) {
+                log.warn("Gemini returned empty recommendations, generating fallback");
+                recommendations = generateFallbackRecommendations(completionRate);
+            }
 
             return AnalysisResult.builder()
                     .totalTasks(totalTasks)
@@ -286,6 +345,51 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
             log.error("Failed to parse Gemini response: {}", e.getMessage());
             throw new RuntimeException("Failed to parse Gemini response", e);
         }
+    }
+
+    private String generateFallbackSummary(int totalTasks, int completedTasks, int completionRate) {
+        if (totalTasks == 0) {
+            return "이번 기간에 등록된 할 일이 없습니다. 새로운 목표를 설정해보세요.";
+        }
+        return String.format("이번 기간 동안 총 %d개의 할 일 중 %d개를 완료하여 %d%%의 완료율을 기록했습니다.",
+                totalTasks, completedTasks, completionRate);
+    }
+
+    private String generateFallbackInsights(int totalTasks, int completedTasks, int completionRate) {
+        StringBuilder sb = new StringBuilder();
+        int pending = totalTasks - completedTasks;
+        if (completedTasks > 0) {
+            sb.append(String.format("• 총 %d개의 할 일을 완료했습니다\n", completedTasks));
+        }
+        if (pending > 0) {
+            sb.append(String.format("• 미완료 할 일이 %d개 남아있습니다\n", pending));
+        }
+        if (completionRate >= 80) {
+            sb.append("• 높은 완료율을 유지하고 있습니다");
+        } else if (completionRate >= 50) {
+            sb.append("• 절반 이상의 할 일을 완료했습니다");
+        } else if (totalTasks > 0) {
+            sb.append("• 완료율 개선이 필요합니다");
+        }
+        return sb.toString().trim();
+    }
+
+    private String generateFallbackRecommendations(int completionRate) {
+        StringBuilder sb = new StringBuilder();
+        if (completionRate < 50) {
+            sb.append("• 할 일을 더 작은 단위로 나눠서 완료하기 쉽게 만들어보세요\n");
+            sb.append("• 하루에 완료할 수 있는 현실적인 목표를 설정해보세요\n");
+            sb.append("• 가장 중요한 할 일에 우선순위를 부여해보세요");
+        } else if (completionRate < 80) {
+            sb.append("• 미완료된 할 일의 패턴을 분석해보세요\n");
+            sb.append("• 방해 요소를 최소화하는 시간대에 집중해보세요\n");
+            sb.append("• 반복 Task를 활용하여 습관을 만들어보세요");
+        } else {
+            sb.append("• 현재의 좋은 습관을 유지하세요\n");
+            sb.append("• 더 도전적인 목표를 설정해볼 수 있습니다\n");
+            sb.append("• 완료된 할 일을 리뷰하고 개선점을 찾아보세요");
+        }
+        return sb.toString().trim();
     }
 
     private String extractJsonContent(String response) {

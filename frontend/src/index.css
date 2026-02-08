@@ -1270,6 +1270,12 @@ button:disabled {
   color: #6b7280;
 }
 
+.report-stat-card .report-stat-sublabel {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
 /* Report Summary Section */
 .report-summary-section {
   display: flex;
