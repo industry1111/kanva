@@ -46,7 +46,8 @@ public class AIReportController {
                 userId,
                 request.getPeriodType(),
                 request.getPeriodStart(),
-                request.getPeriodEnd()
+                request.getPeriodEnd(),
+                request.getTone()
         );
         return ResponseEntity.ok(ApiResponse.ok(response));
     }

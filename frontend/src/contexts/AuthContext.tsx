@@ -27,6 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const response = await authApi.getCurrentUser();
           if (response.success) {
             setUser(response.data);
+            setIsLoading(false);
+            return;
           } else {
             clearTokens();
           }
@@ -34,6 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           clearTokens();
         }
       }
+
+      // 개발 모드: 토큰 없으면 자동 로그인 시도
+      if (import.meta.env.DEV) {
+        try {
+          const response = await authApi.devLogin();
+          if (response.success) {
+            setTokens(response.data.accessToken, response.data.refreshToken);
+            setUser(response.data.user);
+          }
+        } catch {
+          // dev-login 엔드포인트 없으면 무시 (prod 백엔드 연결 시)
+        }
+      }
+
       setIsLoading(false);
     };
 

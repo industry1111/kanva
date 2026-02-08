@@ -21,7 +21,8 @@ public interface AIReportService {
      * 새 리포트 생성 (온디맨드)
      */
     AIReportResponse generateReport(Long userId, ReportPeriodType periodType,
-                                    LocalDate periodStart, LocalDate periodEnd);
+                                    LocalDate periodStart, LocalDate periodEnd,
+                                    String tone);
 
     /**
      * 리포트 상세 조회

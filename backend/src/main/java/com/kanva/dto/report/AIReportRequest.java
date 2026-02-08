@@ -17,4 +17,6 @@ public class AIReportRequest {
     private LocalDate periodStart;
 
     private LocalDate periodEnd;
+
+    private String tone; // ENCOURAGING or STRICT
 }

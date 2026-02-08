@@ -2,6 +2,7 @@
 export type ReportPeriodType = 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
 export type ReportStatus = 'GENERATING' | 'COMPLETED' | 'FAILED';
 export type ReportFeedback = 'HELPFUL' | 'NOT_HELPFUL' | 'NEUTRAL';
+export type ReportTone = 'ENCOURAGING' | 'STRICT';
 
 export interface AIReportSummary {
   id?: number;
@@ -39,6 +40,7 @@ export interface AIReportRequest {
   periodType: ReportPeriodType;
   periodStart?: string;
   periodEnd?: string;
+  tone?: ReportTone;
 }
 
 export interface ReportFeedbackRequest {

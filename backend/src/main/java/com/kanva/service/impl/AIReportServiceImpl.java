@@ -1,5 +1,7 @@
 package com.kanva.service.impl;
 
+import com.kanva.domain.dailynote.DailyNote;
+import com.kanva.domain.dailynote.DailyNoteRepository;
 import com.kanva.domain.report.*;
 import com.kanva.domain.task.Task;
 import com.kanva.domain.task.TaskRepository;
@@ -36,6 +38,7 @@ public class AIReportServiceImpl implements AIReportService {
 
     private final AIReportRepository aiReportRepository;
     private final TaskRepository taskRepository;
+    private final DailyNoteRepository dailyNoteRepository;
     private final UserRepository userRepository;
     private final AIAnalysisService geminiAnalysisService;
     private final AIAnalysisService mockAnalysisService;
@@ -45,6 +48,7 @@ public class AIReportServiceImpl implements AIReportService {
     public AIReportServiceImpl(
             AIReportRepository aiReportRepository,
             TaskRepository taskRepository,
+            DailyNoteRepository dailyNoteRepository,
             UserRepository userRepository,
             @Qualifier("geminiAIAnalysisService") AIAnalysisService geminiAnalysisService,
             @Qualifier("mockAIAnalysisService") AIAnalysisService mockAnalysisService,
@@ -52,6 +56,7 @@ public class AIReportServiceImpl implements AIReportService {
             Clock clock) {
         this.aiReportRepository = aiReportRepository;
         this.taskRepository = taskRepository;
+        this.dailyNoteRepository = dailyNoteRepository;
         this.userRepository = userRepository;
         this.geminiAnalysisService = geminiAnalysisService;
         this.mockAnalysisService = mockAnalysisService;
@@ -78,7 +83,8 @@ public class AIReportServiceImpl implements AIReportService {
     @Override
     @Transactional
     public AIReportResponse generateReport(Long userId, ReportPeriodType periodType,
-                                           LocalDate periodStart, LocalDate periodEnd) {
+                                           LocalDate periodStart, LocalDate periodEnd,
+                                           String tone) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
@@ -96,13 +102,7 @@ public class AIReportServiceImpl implements AIReportService {
             end = today.with(TemporalAdjusters.lastDayOfMonth());
         }
 
-        // 기존 리포트가 있으면 반환
-        var existingReport = aiReportRepository.findByUserIdAndPeriod(userId, start, end);
-        if (existingReport.isPresent() && existingReport.get().isCompleted()) {
-            return AIReportResponse.from(existingReport.get());
-        }
-
-        // 새 리포트 생성
+        // 새 리포트 생성 (tone이 다를 수 있으므로 항상 새로 생성)
         AIReport report = AIReport.builder()
                 .user(user)
                 .periodType(periodType)
@@ -121,8 +121,20 @@ public class AIReportServiceImpl implements AIReportService {
             LocalDate prevEnd = start.minusDays(1);
             List<Task> previousTasks = taskRepository.findByUserIdAndDateRange(userId, prevStart, prevEnd);
 
+            // DailyNote 조회
+            List<DailyNote> dailyNotes = dailyNoteRepository.findByUserIdAndDateRange(userId, start, end);
+
+            // AnalysisContext 구성
+            AIAnalysisService.AnalysisContext context = AIAnalysisService.AnalysisContext.builder()
+                    .currentTasks(currentTasks)
+                    .previousPeriodTasks(previousTasks)
+                    .dailyNotes(dailyNotes)
+                    .periodType(periodType)
+                    .tone(tone != null ? tone : "ENCOURAGING")
+                    .build();
+
             // AI 분석 수행
-            AIAnalysisService.AnalysisResult result = getAnalysisService().analyze(currentTasks, previousTasks);
+            AIAnalysisService.AnalysisResult result = getAnalysisService().analyze(context);
 
             // 결과 저장
             report.complete(
