@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,8 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
     private final ObjectMapper objectMapper;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter NATURAL_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("M월 d일(E)", Locale.KOREAN);
 
     @Override
     public AnalysisResult analyze(AnalysisContext context) {
@@ -113,60 +116,54 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
                                        int completedTasks, int completionRate, String trend) {
         StringBuilder prompt = new StringBuilder();
 
-        // 톤 설정 (구체적 행동 지침)
+        // 역할과 문체 설정
         boolean isStrict = "STRICT".equals(context.getTone());
         if (isStrict) {
-            prompt.append("당신은 냉철한 성과 관리자입니다.\n");
-            prompt.append("규칙:\n");
-            prompt.append("- 데이터에 기반한 팩트만 전달하세요\n");
-            prompt.append("- 칭찬은 최소화하고, 미완료 Task와 비효율적 패턴을 날카롭게 지적하세요\n");
-            prompt.append("- '~해야 합니다', '~하지 마세요' 형식의 직접적 명령어를 사용하세요\n");
-            prompt.append("- 감정적 위로 없이 냉정하게 분석하세요\n\n");
+            prompt.append("당신은 사용자의 생산성을 냉정하게 진단하는 시니어 코치입니다.\n");
+            prompt.append("문체 규칙:\n");
+            prompt.append("- 반말 존댓말 섞지 말고, 일관되게 '~입니다/~하세요' 체를 사용하세요\n");
+            prompt.append("- 잘한 건 간결하게 인정하되, 못한 부분을 더 비중 있게 짚으세요\n");
+            prompt.append("- '솔직히 말해서', '아쉽게도' 같은 직설적 연결어를 쓰세요\n");
+            prompt.append("- 감정적 위로 없이 개선 방향을 명확히 제시하세요\n\n");
         } else {
-            prompt.append("당신은 사용자의 코칭 파트너입니다.\n");
-            prompt.append("규칙:\n");
-            prompt.append("- 구체적인 성과를 짚어서 칭찬하세요 (예: '매일 빠짐없이 알고리즘 문제를 푼 건 대단합니다')\n");
-            prompt.append("- 개선점은 '~하면 더 좋을 것 같아요' 형식으로 부드럽게 제안하세요\n");
-            prompt.append("- 사용자의 노력과 성장을 인정하는 따뜻한 톤을 유지하세요\n\n");
+            prompt.append("당신은 사용자와 매주 커피 한잔 하며 이야기하는 친근한 코칭 파트너입니다.\n");
+            prompt.append("문체 규칙:\n");
+            prompt.append("- 친구에게 말하듯 자연스럽고 따뜻하게 쓰세요 ('~했네요', '~거든요', '~어때요?')\n");
+            prompt.append("- 딱딱한 보고서가 아니라, 대화하듯 써주세요\n");
+            prompt.append("- 구체적 성과를 짚어 칭찬하되, 개선점은 '~해보는 건 어때요?' 형식으로 부드럽게\n");
+            prompt.append("- 숫자를 나열하지 말고, 의미를 해석해서 이야기해주세요\n\n");
         }
 
-        prompt.append("아래 사용자의 생산성 데이터를 분석하여 맞춤형 피드백을 JSON으로 제공하세요.\n\n");
+        prompt.append("아래 데이터를 바탕으로, 사람이 직접 쓴 것처럼 자연스러운 피드백을 JSON으로 작성해주세요.\n\n");
 
         // 기간 정보
-        prompt.append(String.format("## 분석 기간: %s 리포트\n",
-                context.getPeriodType() == ReportPeriodType.WEEKLY ? "주간" : "월간"));
+        String periodLabel = context.getPeriodType() == ReportPeriodType.WEEKLY ? "주간" : "월간";
+        prompt.append(String.format("## 분석 기간: %s 리포트\n", periodLabel));
 
         // 전체 통계
-        prompt.append("\n## 전체 통계\n");
-        prompt.append(String.format("- 총 할 일: %d개\n", totalTasks));
-        prompt.append(String.format("- 완료: %d개\n", completedTasks));
-        prompt.append(String.format("- 완료율: %d%%\n", completionRate));
-        prompt.append(String.format("- 이전 기간 대비 추세: %s\n", trend));
+        prompt.append("\n## 통계\n");
+        prompt.append(String.format("- 전체: %d개 / 완료: %d개 / 완료율: %d%%\n", totalTasks, completedTasks, completionRate));
+        prompt.append(String.format("- 이전 대비: %s\n", trend));
 
-        // 일자별 데일리 노트 + Task
+        // 일자별 데이터
         List<DailyNote> dailyNotes = context.getDailyNotes();
         List<Task> tasks = context.getCurrentTasks();
 
-        // 일자별 그룹핑 (taskDate가 null이면 dailyNote.date 사용)
         Map<LocalDate, List<Task>> tasksByDate = tasks.stream()
                 .collect(Collectors.groupingBy(t -> {
                     if (t.getTaskDate() != null) return t.getTaskDate();
                     if (t.getDailyNote() != null && t.getDailyNote().getDate() != null) return t.getDailyNote().getDate();
-                    return LocalDate.now(); // 최후 fallback
+                    return LocalDate.now();
                 }));
 
         Map<LocalDate, DailyNote> notesByDate = dailyNotes.stream()
                 .collect(Collectors.toMap(DailyNote::getDate, n -> n, (a, b) -> a));
 
-        // 월간 리포트일 때 주 단위 그룹핑
+        // 월간 리포트 - 주간 요약
         if (context.getPeriodType() == ReportPeriodType.MONTHLY && !tasks.isEmpty()) {
-            prompt.append("\n## 주간별 통계\n");
-            LocalDate earliest = tasksByDate.keySet().stream()
-                    .min(LocalDate::compareTo)
-                    .orElse(LocalDate.now());
-            LocalDate latest = tasksByDate.keySet().stream()
-                    .max(LocalDate::compareTo)
-                    .orElse(LocalDate.now());
+            prompt.append("\n## 주차별 요약\n");
+            LocalDate earliest = tasksByDate.keySet().stream().min(LocalDate::compareTo).orElse(LocalDate.now());
+            LocalDate latest = tasksByDate.keySet().stream().max(LocalDate::compareTo).orElse(LocalDate.now());
 
             LocalDate weekStart = earliest;
             int weekNum = 1;
@@ -189,8 +186,8 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
                         .filter(t -> t.getStatus() == TaskStatus.COMPLETED).count();
                 int weekRate = weekTotal > 0 ? (int) Math.round((double) weekCompleted / weekTotal * 100) : 0;
 
-                prompt.append(String.format("- %d주차 (%s ~ %s): %d개 중 %d개 완료 (%d%%)\n",
-                        weekNum, weekStart.format(DATE_FORMATTER), weekEnd.format(DATE_FORMATTER),
+                prompt.append(String.format("- %d주차 (%s~%s): %d개 중 %d개 완료 (%d%%)\n",
+                        weekNum, weekStart.format(NATURAL_DATE_FORMATTER), weekEnd.format(NATURAL_DATE_FORMATTER),
                         weekTotal, weekCompleted, weekRate));
 
                 weekStart = weekEnd.plusDays(1);
@@ -199,54 +196,46 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         }
 
         // 일자별 상세
-        prompt.append("\n## 일자별 상세 데이터\n");
+        prompt.append("\n## 일자별 데이터\n");
         tasksByDate.keySet().stream().sorted().forEach(date -> {
-            prompt.append(String.format("\n### %s\n", date.format(DATE_FORMATTER)));
+            prompt.append(String.format("\n[%s]\n", date.format(NATURAL_DATE_FORMATTER)));
 
-            // 데일리 노트
             DailyNote note = notesByDate.get(date);
             if (note != null && note.getContent() != null && !note.getContent().isBlank()) {
                 String content = note.getContent();
-                if (content.length() > 500) {
-                    content = content.substring(0, 500) + "...";
-                }
-                prompt.append(String.format("**데일리 노트**: %s\n", content));
+                if (content.length() > 500) content = content.substring(0, 500) + "...";
+                prompt.append(String.format("노트: %s\n", content));
             }
 
-            // Task 목록
             List<Task> dateTasks = tasksByDate.get(date);
             if (dateTasks != null && !dateTasks.isEmpty()) {
-                prompt.append("**할 일**:\n");
                 for (Task task : dateTasks) {
-                    prompt.append(String.format("  - [%s] %s", task.getStatus().name(), task.getTitle()));
+                    String statusIcon = task.getStatus() == TaskStatus.COMPLETED ? "✅"
+                            : task.getStatus() == TaskStatus.IN_PROGRESS ? "🔄" : "⬜";
+                    prompt.append(String.format("  %s %s", statusIcon, task.getTitle()));
                     if (task.getDescription() != null && !task.getDescription().isBlank()) {
                         String desc = task.getDescription();
                         if (desc.length() > 200) desc = desc.substring(0, 200) + "...";
-                        prompt.append(String.format(" - %s", desc));
+                        prompt.append(String.format(" (%s)", desc));
                     }
-                    if (task.isSeriesTask()) {
-                        prompt.append(" [반복]");
-                    }
-                    if (task.isOverdue()) {
-                        prompt.append(" [지연]");
-                    }
+                    if (task.isSeriesTask()) prompt.append(" [매일반복]");
+                    if (task.isOverdue()) prompt.append(" [기한초과]");
                     prompt.append("\n");
                 }
             }
         });
 
-        // 노트만 있고 Task가 없는 날짜도 포함
+        // 노트만 있는 날
         notesByDate.keySet().stream()
                 .filter(date -> !tasksByDate.containsKey(date))
                 .sorted()
                 .forEach(date -> {
                     DailyNote note = notesByDate.get(date);
                     if (note.getContent() != null && !note.getContent().isBlank()) {
-                        prompt.append(String.format("\n### %s\n", date.format(DATE_FORMATTER)));
+                        prompt.append(String.format("\n[%s]\n", date.format(NATURAL_DATE_FORMATTER)));
                         String content = note.getContent();
                         if (content.length() > 500) content = content.substring(0, 500) + "...";
-                        prompt.append(String.format("**데일리 노트**: %s\n", content));
-                        prompt.append("**할 일**: 없음\n");
+                        prompt.append(String.format("노트: %s\n(등록된 할 일 없음)\n", content));
                     }
                 });
 
@@ -257,52 +246,48 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
             int prevCompleted = (int) previousTasks.stream()
                     .filter(t -> t.getStatus() == TaskStatus.COMPLETED).count();
             int prevRate = prevTotal > 0 ? (int) Math.round((double) prevCompleted / prevTotal * 100) : 0;
-
-            prompt.append("\n## 이전 기간 통계 (비교용)\n");
-            prompt.append(String.format("- 총 할 일: %d개, 완료: %d개, 완료율: %d%%\n", prevTotal, prevCompleted, prevRate));
+            prompt.append(String.format("\n## 이전 기간: %d개 중 %d개 완료 (%d%%)\n", prevTotal, prevCompleted, prevRate));
         }
 
-        // 응답 형식 (code fence 없이, 필드별 상세 요구사항)
-        prompt.append("\n## 응답 규칙\n");
-        prompt.append("아래 3개 필드를 가진 JSON 객체를 반환하세요. 모든 필드는 반드시 내용을 채워야 합니다.\n\n");
+        // 응답 형식
+        prompt.append("\n## 작성 규칙\n");
+        prompt.append("3개 필드(summary, insights, recommendations)를 가진 JSON을 반환하세요.\n\n");
 
-        prompt.append("**summary** (필수, 3~5문장):\n");
-        prompt.append("- 반드시 실제 Task 제목을 1개 이상 언급하세요 (예: '알고리즘 1day 1commit')\n");
-        prompt.append("- 데일리 노트에 적힌 내용이 있다면 반드시 반영하세요\n");
-        prompt.append("- 완료율 수치와 그 의미를 해석하세요\n\n");
+        prompt.append("summary (3~5문장):\n");
+        prompt.append("- 이번 기간을 한마디로 정리하는 느낌으로 시작하세요\n");
+        prompt.append("- 실제 할 일 이름을 자연스럽게 녹여 언급하세요\n");
+        prompt.append("- 노트 내용이 있다면 반영하세요\n\n");
 
-        prompt.append("**insights** (필수, 불릿포인트 3~5개):\n");
-        prompt.append("- 각 불릿은 줄바꿈(\\n)으로 구분하고, '• '로 시작하세요\n");
-        prompt.append("- 각 인사이트마다 구체적 데이터 근거를 포함하세요 (Task명, 날짜, 완료율 등)\n");
-        prompt.append("- 요일별/시간별 패턴, 반복 Task 완료 패턴, 노트에서 발견한 감정/관심사를 분석하세요\n");
-        prompt.append("- 통계 섹션과 동일한 숫자만 반복하지 마세요\n\n");
+        prompt.append("insights (3~5개, 줄바꿈 구분, '• '로 시작):\n");
+        prompt.append("- 숫자 나열이 아니라, 패턴이나 의미를 해석해주세요\n");
+        prompt.append("- 요일별 흐름, 반복 항목 달성률, 노트에서 읽히는 감정 등\n\n");
 
-        prompt.append("**recommendations** (필수, 불릿포인트 3~5개):\n");
-        prompt.append("- 각 불릿은 줄바꿈(\\n)으로 구분하고, '• '로 시작하세요\n");
-        prompt.append("- 동사로 시작하는 실행 가능한 조언만 적으세요\n");
-        prompt.append("- 이 사용자의 실제 Task와 노트 데이터에 기반한 맞춤 조언이어야 합니다\n");
-        prompt.append("- '일찍 일어나세요' 같은 일반적 생산성 팁은 금지합니다\n\n");
+        prompt.append("recommendations (3~5개, 줄바꿈 구분, '• '로 시작):\n");
+        prompt.append("- 이 사용자의 실제 데이터에 기반한 구체적 제안만\n");
+        prompt.append("- '일찍 일어나세요' 같은 일반론 금지\n\n");
 
-        prompt.append("**금지사항**:\n");
-        prompt.append("- '전체적으로 잘하고 계십니다' 같은 모호한 평가 금지\n");
-        prompt.append("- 빈 문자열(\"\") 반환 금지. 모든 필드에 반드시 내용을 채우세요\n");
-        prompt.append("- summary에 모든 내용을 몰아넣지 마세요. insights와 recommendations에 각각 다른 내용을 작성하세요\n\n");
+        prompt.append("## 절대 금지\n");
+        prompt.append("- 'Task'라는 영어 단어 사용 금지. 대신 자연스러운 표현(할 일, 항목, 목표 등)을 쓰세요\n");
+        prompt.append("- '2026-02-08' 같은 ISO 날짜 포맷 금지. '2월 8일', '월요일', '이번 주 초' 같은 자연어를 쓰세요\n");
+        prompt.append("- 데이터를 기계적으로 나열하지 마세요. 해석하고 의미를 붙여주세요\n");
+        prompt.append("- 프롬프트의 구조를 그대로 반복하지 마세요. 자기 말로 풀어쓰세요\n");
+        prompt.append("- summary에 모든 내용 몰아넣기 금지\n");
+        prompt.append("- 빈 문자열 반환 금지\n\n");
 
-        // few-shot 예시
-        prompt.append("## 출력 예시\n");
+        // few-shot (자연스러운 대화체)
+        prompt.append("## 출력 예시 (이 톤과 자연스러움을 참고하세요)\n");
         prompt.append("{\n");
-        prompt.append("  \"summary\": \"이번 주에 총 12개의 할 일 중 9개를 완료하여 75%의 완료율을 기록했습니다. ");
-        prompt.append("특히 '알고리즘 1day 1commit'을 매일 빠짐없이 수행한 점이 인상적입니다. ");
-        prompt.append("데일리 노트에서 '면접 준비가 걱정된다'고 적었는데, 실제로 이력서 관련 Task를 3개 완료하며 행동으로 옮기고 있습니다. ");
-        prompt.append("다만 '운동하기' Task가 3일 연속 미완료 상태입니다.\",\n");
-        prompt.append("  \"insights\": \"• '알고리즘 1day 1commit' 반복 Task의 완료율이 100%로, 코딩 습관이 완전히 자리잡았습니다\\n");
-        prompt.append("• 화요일과 수요일에 Task 완료가 집중되어 있고, 목금은 완료율이 낮습니다\\n");
-        prompt.append("• 데일리 노트에 '피곤하다'는 표현이 3회 등장하여 체력 관리가 생산성에 영향을 주고 있습니다\\n");
-        prompt.append("• '운동하기' Task는 등록만 하고 한 번도 완료하지 않아 목표 재설정이 필요합니다\",\n");
-        prompt.append("  \"recommendations\": \"• 목금의 에너지 저하 패턴을 고려해 중요한 Task는 화수에 배치하세요\\n");
-        prompt.append("• '운동하기'를 '10분 스트레칭'으로 목표를 축소하면 완료 확률이 높아집니다\\n");
-        prompt.append("• 면접 준비 Task를 시리즈(반복)로 만들어 매일 30분씩 진행해보세요\\n");
-        prompt.append("• 노트에 '오늘 잘한 일 1가지' 섹션을 추가하면 동기부여에 도움됩니다\"\n");
+        prompt.append("  \"summary\": \"이번 주는 꽤 알찬 한 주였네요! 13개 중 9개를 해내서 완료율 69%를 기록했어요. ");
+        prompt.append("특히 알고리즘 문제를 매일 빠짐없이 푼 게 눈에 띄어요. 주 후반에 이력서 작성과 포트폴리오 정리를 동시에 진행하느라 바빴을 텐데, ");
+        prompt.append("노트에 적은 것처럼 체력적으로 힘들었을 수 있겠어요. 그래도 꾸준히 기록하면서 해내고 있는 모습이 대단합니다.\",\n");
+        prompt.append("  \"insights\": \"• 알고리즘 풀이가 이번 주도 100% 달성이에요. 이 루틴은 확실히 습관으로 자리잡았네요\\n");
+        prompt.append("• 주 초반(월~수)에 완료가 집중되고, 목금은 새로 등록만 하고 마무리 못한 항목이 많아요\\n");
+        prompt.append("• 노트에서 '피곤하다'는 표현이 두 번 나왔어요. 후반부 생산성 저하와 연관이 있어 보여요\\n");
+        prompt.append("• 이력서와 포트폴리오처럼 큰 작업은 하루에 몰아서 하려다가 미완료로 남는 패턴이 보여요\",\n");
+        prompt.append("  \"recommendations\": \"• 이력서 같은 큰 작업은 '초안 쓰기→수정→최종본' 식으로 3일에 나눠보는 건 어때요?\\n");
+        prompt.append("• 목금에 에너지가 떨어지니까 중요한 건 화수에 배치하면 완료율이 올라갈 거예요\\n");
+        prompt.append("• 노트에 그날 컨디션을 한 줄이라도 적으면, 나중에 패턴 파악할 때 도움이 돼요\\n");
+        prompt.append("• 매일 반복 항목이 잘 되고 있으니 거기에 '10분 스트레칭' 하나 추가해보는 것도 좋겠어요\"\n");
         prompt.append("}\n");
 
         return prompt.toString();
