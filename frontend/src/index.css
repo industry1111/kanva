@@ -978,6 +978,73 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Tone Selector */
+.tone-selector {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tone-selector-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.tone-selector-options {
+  display: flex;
+  gap: 8px;
+}
+
+.tone-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tone-option:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.tone-option.active[title="따뜻하게 응원해줘요"] {
+  background-color: #ecfdf5;
+  border-color: #10b981;
+  color: #065f46;
+}
+
+.tone-option.active[title="직설적으로 채찍질해요"] {
+  background-color: #fef2f2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.tone-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tone-option-icon {
+  font-size: 16px;
+}
+
+.tone-option-label {
+  font-size: 14px;
+}
+
 .report-generate-btn {
   display: flex;
   align-items: center;
@@ -1385,7 +1452,8 @@ button:disabled {
     flex-wrap: wrap;
   }
 
-  .period-selector {
+  .period-selector,
+  .tone-selector {
     flex: 1;
     min-width: 200px;
   }
@@ -1439,6 +1507,7 @@ button:disabled {
   }
 
   .period-selector,
+  .tone-selector,
   .report-generate-btn {
     min-width: auto;
     width: 100%;

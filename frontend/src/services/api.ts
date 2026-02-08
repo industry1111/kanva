@@ -91,6 +91,14 @@ export const authApi = {
   getCurrentUser: async (): Promise<ApiResponse<User>> => {
     return fetchWithAuth('/auth/me');
   },
+
+  devLogin: async (): Promise<ApiResponse<LoginResponse>> => {
+    const response = await fetch(`${API_BASE_URL}/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return response.json();
+  },
 };
 
 // DailyNote API

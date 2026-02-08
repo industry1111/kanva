@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import PeriodSelector from '../components/report/PeriodSelector';
+import ToneSelector from '../components/report/ToneSelector';
 import ReportHistoryList from '../components/report/ReportHistoryList';
 import InsightCard from '../components/report/InsightCard';
 import RecommendationCard from '../components/report/RecommendationCard';
@@ -8,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { reportApi } from '../services/api';
 import type {
   ReportPeriodType,
+  ReportTone,
   ReportFeedback,
   AIReport,
   AIReportDetail,
@@ -47,6 +49,7 @@ function getTrendColor(trend?: string): string {
 export default function AIReportPage() {
   const { user, logout } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriodType>('WEEKLY');
+  const [selectedTone, setSelectedTone] = useState<ReportTone>('ENCOURAGING');
   const [reportHistory, setReportHistory] = useState<AIReport[]>([]);
   const [currentReport, setCurrentReport] = useState<AIReportDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,7 +97,7 @@ export default function AIReportPage() {
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
-      const response = await reportApi.generate({ periodType: selectedPeriod });
+      const response = await reportApi.generate({ periodType: selectedPeriod, tone: selectedTone });
       if (response.success) {
         // 히스토리 다시 로드
         await loadReportHistory();
@@ -224,6 +227,11 @@ export default function AIReportPage() {
           <PeriodSelector
             selectedPeriod={selectedPeriod}
             onSelectPeriod={setSelectedPeriod}
+            disabled={isGenerating}
+          />
+          <ToneSelector
+            selectedTone={selectedTone}
+            onSelectTone={setSelectedTone}
             disabled={isGenerating}
           />
           <button
