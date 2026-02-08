@@ -147,10 +147,13 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         List<DailyNote> dailyNotes = context.getDailyNotes();
         List<Task> tasks = context.getCurrentTasks();
 
-        // 일자별 그룹핑
+        // 일자별 그룹핑 (taskDate가 null이면 dailyNote.date 사용)
         Map<LocalDate, List<Task>> tasksByDate = tasks.stream()
-                .filter(t -> t.getTaskDate() != null)
-                .collect(Collectors.groupingBy(Task::getTaskDate));
+                .collect(Collectors.groupingBy(t -> {
+                    if (t.getTaskDate() != null) return t.getTaskDate();
+                    if (t.getDailyNote() != null && t.getDailyNote().getDate() != null) return t.getDailyNote().getDate();
+                    return LocalDate.now(); // 최후 fallback
+                }));
 
         Map<LocalDate, DailyNote> notesByDate = dailyNotes.stream()
                 .collect(Collectors.toMap(DailyNote::getDate, n -> n, (a, b) -> a));
@@ -158,14 +161,10 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         // 월간 리포트일 때 주 단위 그룹핑
         if (context.getPeriodType() == ReportPeriodType.MONTHLY && !tasks.isEmpty()) {
             prompt.append("\n## 주간별 통계\n");
-            LocalDate earliest = tasks.stream()
-                    .map(Task::getTaskDate)
-                    .filter(d -> d != null)
+            LocalDate earliest = tasksByDate.keySet().stream()
                     .min(LocalDate::compareTo)
                     .orElse(LocalDate.now());
-            LocalDate latest = tasks.stream()
-                    .map(Task::getTaskDate)
-                    .filter(d -> d != null)
+            LocalDate latest = tasksByDate.keySet().stream()
                     .max(LocalDate::compareTo)
                     .orElse(LocalDate.now());
 
@@ -178,9 +177,11 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
                 LocalDate ws = weekStart;
                 LocalDate we = weekEnd;
                 List<Task> weekTasks = tasks.stream()
-                        .filter(t -> t.getTaskDate() != null
-                                && !t.getTaskDate().isBefore(ws)
-                                && !t.getTaskDate().isAfter(we))
+                        .filter(t -> {
+                            LocalDate d = t.getTaskDate() != null ? t.getTaskDate()
+                                    : (t.getDailyNote() != null ? t.getDailyNote().getDate() : null);
+                            return d != null && !d.isBefore(ws) && !d.isAfter(we);
+                        })
                         .toList();
 
                 int weekTotal = weekTasks.size();
