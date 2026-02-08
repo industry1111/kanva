@@ -44,17 +44,19 @@ public class GeminiClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+        Map<String, Object> generationConfig = new java.util.HashMap<>();
+        generationConfig.put("temperature", 0.7);
+        generationConfig.put("maxOutputTokens", 2048);
+        generationConfig.put("topP", 0.95);
+        generationConfig.put("responseMimeType", "application/json");
+
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                         Map.of("parts", List.of(
                                 Map.of("text", prompt)
                         ))
                 ),
-                "generationConfig", Map.of(
-                        "temperature", 0.7,
-                        "maxOutputTokens", 2048,
-                        "topP", 0.95
-                )
+                "generationConfig", generationConfig
         );
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);

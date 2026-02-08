@@ -55,6 +55,7 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         try {
             String prompt = buildAnalysisPrompt(context, totalTasks, completedTasks, completionRate, trend);
             String response = geminiClient.generateContent(prompt);
+            log.debug("Gemini raw response: {}", response);
 
             return parseGeminiResponse(response, totalTasks, completedTasks, completionRate, trend);
         } catch (Exception e) {
@@ -288,27 +289,30 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
     }
 
     private String extractJsonContent(String response) {
-        if (response.contains("```json")) {
-            int start = response.indexOf("```json") + 7;
-            int end = response.indexOf("```", start);
+        // Gemini 2.5 Flash의 thinking 블록 제거
+        String cleaned = response.replaceAll("(?s)<think>.*?</think>", "").trim();
+
+        if (cleaned.contains("```json")) {
+            int start = cleaned.indexOf("```json") + 7;
+            int end = cleaned.indexOf("```", start);
             if (end > start) {
-                return response.substring(start, end).trim();
+                return cleaned.substring(start, end).trim();
             }
         }
-        if (response.contains("```")) {
-            int start = response.indexOf("```") + 3;
-            int end = response.indexOf("```", start);
+        if (cleaned.contains("```")) {
+            int start = cleaned.indexOf("```") + 3;
+            int end = cleaned.indexOf("```", start);
             if (end > start) {
-                return response.substring(start, end).trim();
+                return cleaned.substring(start, end).trim();
             }
         }
-        if (response.contains("{")) {
-            int start = response.indexOf("{");
-            int end = response.lastIndexOf("}") + 1;
+        if (cleaned.contains("{")) {
+            int start = cleaned.indexOf("{");
+            int end = cleaned.lastIndexOf("}") + 1;
             if (end > start) {
-                return response.substring(start, end);
+                return cleaned.substring(start, end);
             }
         }
-        return response.trim();
+        return cleaned.trim();
     }
 }
