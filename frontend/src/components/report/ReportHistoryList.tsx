@@ -4,6 +4,7 @@ interface ReportHistoryListProps {
   reports: AIReport[];
   selectedReportId?: number;
   onSelectReport: (report: AIReport) => void;
+  onDeleteReport?: (reportId: number) => void;
   isLoading?: boolean;
 }
 
@@ -20,8 +21,16 @@ export default function ReportHistoryList({
   reports,
   selectedReportId,
   onSelectReport,
+  onDeleteReport,
   isLoading = false,
 }: ReportHistoryListProps) {
+  const handleDelete = (e: React.MouseEvent, reportId: number) => {
+    e.stopPropagation();
+    if (onDeleteReport) {
+      onDeleteReport(reportId);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="report-history">
@@ -57,7 +66,18 @@ export default function ReportHistoryList({
             <span className="report-history-period">
               {formatPeriod(report.periodStart, report.periodEnd)}
             </span>
-            <span className="report-history-rate">{report.completionRate ?? 0}%</span>
+            <div className="report-history-actions">
+              <span className="report-history-rate">{report.completionRate ?? 0}%</span>
+              {onDeleteReport && (
+                <button
+                  className="report-delete-btn"
+                  onClick={(e) => handleDelete(e, report.id)}
+                  title="삭제"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ul>

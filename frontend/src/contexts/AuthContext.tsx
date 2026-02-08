@@ -8,6 +8,8 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  login: (name: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  signUp: (name: string, password: string) => Promise<{ success: boolean; message?: string }>;
   loginWithOAuth: (provider: string) => Promise<void>;
   handleOAuthCallback: (provider: string, code: string, state: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
@@ -56,6 +58,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
+  const login = async (name: string, password: string) => {
+    try {
+      const response = await authApi.login(name, password);
+      if (response.success) {
+        setTokens(response.data.accessToken, response.data.refreshToken);
+        setUser(response.data.user);
+        return { success: true };
+      }
+      return { success: false, message: response.message };
+    } catch {
+      return { success: false, message: '로그인 중 오류가 발생했습니다.' };
+    }
+  };
+
+  const signUp = async (name: string, password: string) => {
+    try {
+      const response = await authApi.signUp(name, password);
+      if (response.success) {
+        setTokens(response.data.accessToken, response.data.refreshToken);
+        setUser(response.data.user);
+        return { success: true };
+      }
+      return { success: false, message: response.message };
+    } catch {
+      return { success: false, message: '회원가입 중 오류가 발생했습니다.' };
+    }
+  };
+
   const loginWithOAuth = async (provider: string) => {
     try {
       const response = await authApi.getOAuthLoginUrl(provider);
@@ -101,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
+        login,
+        signUp,
         loginWithOAuth,
         handleOAuthCallback,
         logout,

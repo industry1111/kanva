@@ -115,6 +115,27 @@ export default function AIReportPage() {
     loadReportDetail(report.id);
   };
 
+  const handleDeleteReport = async (reportId: number) => {
+    try {
+      const response = await reportApi.delete(reportId);
+      if (response.success) {
+        // 현재 보고 있던 리포트를 삭제한 경우
+        if (currentReport?.id === reportId) {
+          setCurrentReport(null);
+        }
+        // 히스토리에서 제거
+        const updatedHistory = reportHistory.filter((r) => r.id !== reportId);
+        setReportHistory(updatedHistory);
+        // 삭제 후 다음 리포트 자동 선택
+        if (currentReport?.id === reportId && updatedHistory.length > 0) {
+          loadReportDetail(updatedHistory[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete report:', error);
+    }
+  };
+
   const handleSubmitFeedback = async (feedback: ReportFeedback) => {
     if (!currentReport) return;
 
@@ -255,6 +276,7 @@ export default function AIReportPage() {
             reports={reportHistory}
             selectedReportId={currentReport?.id}
             onSelectReport={handleSelectReport}
+            onDeleteReport={handleDeleteReport}
             isLoading={historyLoading}
           />
         </aside>

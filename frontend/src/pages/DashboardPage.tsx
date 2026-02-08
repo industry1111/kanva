@@ -2,21 +2,16 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import MonthSelector from '../components/dashboard/MonthSelector';
 import TaskStats from '../components/dashboard/TaskStats';
 import ProductivityChart from '../components/dashboard/ProductivityChart';
-import AIReportCard from '../components/dashboard/AIReportCard';
 import { useAuth } from '../contexts/AuthContext';
 import { dashboardApi } from '../services/api';
 import type { DashboardStats, DailyStat } from '../types/api';
-
-interface DashboardPageProps {
-  onNavigateToReport?: () => void;
-}
 
 function getCurrentMonth(): string {
   const today = new Date();
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 }
 
-export default function DashboardPage({ onNavigateToReport }: DashboardPageProps) {
+export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [taskStats, setTaskStats] = useState<DashboardStats>({
@@ -113,7 +108,6 @@ export default function DashboardPage({ onNavigateToReport }: DashboardPageProps
             data={productivityData}
             selectedMonth={selectedMonth}
           />
-          <AIReportCard onViewDetails={onNavigateToReport || (() => {})} />
         </div>
         {isDataLoading && (
           <div className="dashboard-data-loading">

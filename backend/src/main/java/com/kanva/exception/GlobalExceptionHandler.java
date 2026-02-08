@@ -48,6 +48,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ErrorCode.DUPLICATE_EMAIL, e.getMessage()));
     }
 
+    @ExceptionHandler(DuplicateNameException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateNameException(DuplicateNameException e) {
+        log.error("DuplicateNameException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.fail(ErrorCode.DUPLICATE_NAME, e.getMessage()));
+    }
+
     @ExceptionHandler(TaskStatusChangeNotAllowedException.class)
     public ResponseEntity<ApiResponse<Void>> handleTaskStatusChangeNotAllowedException(TaskStatusChangeNotAllowedException e) {
         log.warn("TaskStatusChangeNotAllowedException: {}", e.getMessage());

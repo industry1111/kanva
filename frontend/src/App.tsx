@@ -72,7 +72,7 @@ function AppContent() {
         </button>
       </nav>
       {currentPage === 'workspace' && <DailyWorkspacePage />}
-      {currentPage === 'dashboard' && <DashboardPage onNavigateToReport={() => setCurrentPage('report')} />}
+      {currentPage === 'dashboard' && <DashboardPage />}
       {currentPage === 'report' && <AIReportPage />}
     </div>
   );

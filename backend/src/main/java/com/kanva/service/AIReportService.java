@@ -4,18 +4,12 @@ import com.kanva.domain.report.ReportFeedback;
 import com.kanva.domain.report.ReportPeriodType;
 import com.kanva.dto.report.AIReportDetailResponse;
 import com.kanva.dto.report.AIReportResponse;
-import com.kanva.dto.report.AIReportSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 
 public interface AIReportService {
-
-    /**
-     * Dashboard용 주간 요약 조회 (최신 완료된 주간 리포트)
-     */
-    AIReportSummaryResponse getWeeklySummary(Long userId);
 
     /**
      * 새 리포트 생성 (온디맨드)
@@ -38,4 +32,9 @@ public interface AIReportService {
      * 피드백 제출
      */
     void submitFeedback(Long userId, Long reportId, ReportFeedback feedback);
+
+    /**
+     * 리포트 삭제
+     */
+    void deleteReport(Long userId, Long reportId);
 }

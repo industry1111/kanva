@@ -9,7 +9,7 @@ import com.kanva.dto.user.LoginRequest;
 import com.kanva.dto.user.LoginResponse;
 import com.kanva.dto.user.SignUpRequest;
 import com.kanva.dto.user.UserResponse;
-import com.kanva.exception.DuplicateEmailException;
+import com.kanva.exception.DuplicateNameException;
 import com.kanva.exception.InvalidPasswordException;
 import com.kanva.exception.UserNotFoundException;
 import com.kanva.security.jwt.JwtToken;
@@ -35,33 +35,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponse signUp(SignUpRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateEmailException(request.getEmail());
+    public LoginResponse signUp(SignUpRequest request) {
+        if (userRepository.existsByName(request.getName())) {
+            throw new DuplicateNameException(request.getName());
         }
 
         User user = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .build();
 
         User savedUser = userRepository.save(user);
-        return UserResponse.from(savedUser, Collections.emptyList());
+
+        // 가입 후 자동 로그인 (JWT 발급)
+        String authorities = "ROLE_" + savedUser.getRole().name();
+        JwtToken jwtToken = jwtTokenProvider.generateToken(savedUser.getId(), savedUser.getName(), authorities);
+
+        return LoginResponse.of(jwtToken, UserResponse.from(savedUser, Collections.emptyList()));
     }
 
     @Override
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException(request.getEmail()));
+        User user = userRepository.findByName(request.getName())
+                .orElseThrow(() -> new UserNotFoundException(request.getName()));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidPasswordException();
         }
 
         String authorities = "ROLE_" + user.getRole().name();
-        JwtToken jwtToken = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), authorities);
+        JwtToken jwtToken = jwtTokenProvider.generateToken(user.getId(), user.getName(), authorities);
 
         List<OAuthProvider> connectedProviders = oauthConnectionRepository.findProvidersByUserId(user.getId());
         return LoginResponse.of(jwtToken, UserResponse.from(user, connectedProviders));
@@ -76,9 +80,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getCurrentUser(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException(email));
+    public UserResponse getCurrentUser(String identifier) {
+        // identifier는 JWT subject - name 또는 email일 수 있음 (OAuth 사용자는 email, 닉네임 사용자는 name)
+        User user = userRepository.findByName(identifier)
+                .or(() -> userRepository.findByEmail(identifier))
+                .orElseThrow(() -> new UserNotFoundException(identifier));
         List<OAuthProvider> connectedProviders = oauthConnectionRepository.findProvidersByUserId(user.getId());
         return UserResponse.from(user, connectedProviders);
     }

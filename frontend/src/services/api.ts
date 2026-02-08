@@ -14,7 +14,6 @@ import type {
   DashboardResponse,
 } from '../types/api';
 import type {
-  AIReportSummary,
   AIReport,
   AIReportDetail,
   AIReportRequest,
@@ -74,6 +73,24 @@ async function fetchWithAuth<T>(
 
 // Auth API
 export const authApi = {
+  login: async (name: string, password: string): Promise<ApiResponse<LoginResponse>> => {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, password }),
+    });
+    return response.json();
+  },
+
+  signUp: async (name: string, password: string): Promise<ApiResponse<LoginResponse>> => {
+    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, password }),
+    });
+    return response.json();
+  },
+
   getOAuthLoginUrl: async (provider: string): Promise<ApiResponse<OAuthLoginUrlResponse>> => {
     const response = await fetch(`${API_BASE_URL}/auth/oauth/${provider}/login-url`);
     return response.json();
@@ -206,10 +223,6 @@ export const dashboardApi = {
 
 // Report API
 export const reportApi = {
-  getSummary: async (): Promise<ApiResponse<AIReportSummary>> => {
-    return fetchWithAuth('/reports/summary');
-  },
-
   generate: async (request: AIReportRequest): Promise<ApiResponse<AIReport>> => {
     return fetchWithAuth('/reports', {
       method: 'POST',
@@ -229,6 +242,12 @@ export const reportApi = {
     return fetchWithAuth(`/reports/${reportId}/feedback`, {
       method: 'POST',
       body: JSON.stringify(request),
+    });
+  },
+
+  delete: async (reportId: number): Promise<ApiResponse<void>> => {
+    return fetchWithAuth(`/reports/${reportId}`, {
+      method: 'DELETE',
     });
   },
 };

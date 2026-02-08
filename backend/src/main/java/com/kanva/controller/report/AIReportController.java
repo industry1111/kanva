@@ -22,18 +22,6 @@ public class AIReportController {
     private final AIReportService aiReportService;
 
     /**
-     * Dashboard용 주간 요약 조회
-     * GET /api/reports/summary
-     */
-    @GetMapping("/summary")
-    public ResponseEntity<ApiResponse<AIReportSummaryResponse>> getSummary(
-            @AuthenticationPrincipal UserPrincipal principal) {
-        Long userId = principal.getId();
-        AIReportSummaryResponse response = aiReportService.getWeeklySummary(userId);
-        return ResponseEntity.ok(ApiResponse.ok(response));
-    }
-
-    /**
      * 새 리포트 생성 (온디맨드)
      * POST /api/reports
      */
@@ -89,6 +77,19 @@ public class AIReportController {
             @Valid @RequestBody ReportFeedbackRequest request) {
         Long userId = principal.getId();
         aiReportService.submitFeedback(userId, id, request.getFeedback());
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    /**
+     * 리포트 삭제
+     * DELETE /api/reports/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteReport(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id) {
+        Long userId = principal.getId();
+        aiReportService.deleteReport(userId, id);
         return ResponseEntity.ok(ApiResponse.ok());
     }
 }

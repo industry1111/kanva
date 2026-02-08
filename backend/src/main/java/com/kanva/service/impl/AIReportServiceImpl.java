@@ -9,7 +9,6 @@ import com.kanva.domain.user.User;
 import com.kanva.domain.user.UserRepository;
 import com.kanva.dto.report.AIReportDetailResponse;
 import com.kanva.dto.report.AIReportResponse;
-import com.kanva.dto.report.AIReportSummaryResponse;
 import com.kanva.exception.ReportGenerationException;
 import com.kanva.exception.ReportNotFoundException;
 import com.kanva.exception.UserNotFoundException;
@@ -71,13 +70,6 @@ public class AIReportServiceImpl implements AIReportService {
         }
         log.info("Using Mock AI Analysis Service (Gemini not configured)");
         return mockAnalysisService;
-    }
-
-    @Override
-    public AIReportSummaryResponse getWeeklySummary(Long userId) {
-        return aiReportRepository.findLatestWeeklyReport(userId)
-                .map(AIReportSummaryResponse::from)
-                .orElse(AIReportSummaryResponse.empty());
     }
 
     @Override
@@ -197,5 +189,19 @@ public class AIReportServiceImpl implements AIReportService {
         }
 
         report.submitFeedback(feedback);
+    }
+
+    @Override
+    @Transactional
+    public void deleteReport(Long userId, Long reportId) {
+        AIReport report = aiReportRepository.findById(reportId)
+                .orElseThrow(() -> new ReportNotFoundException(reportId));
+
+        // 본인 리포트인지 확인
+        if (!report.getUser().getId().equals(userId)) {
+            throw new ReportNotFoundException(reportId);
+        }
+
+        aiReportRepository.delete(report);
     }
 }
