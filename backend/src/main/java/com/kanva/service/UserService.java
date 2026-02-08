@@ -8,9 +8,9 @@ import com.kanva.dto.user.UserResponse;
 public interface UserService {
 
     /**
-     * 회원가입
+     * 회원가입 (가입 후 자동 로그인)
      */
-    UserResponse signUp(SignUpRequest request);
+    LoginResponse signUp(SignUpRequest request);
 
     /**
      * 로그인

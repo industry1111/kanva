@@ -18,7 +18,7 @@ export type OAuthProvider = 'GITHUB' | 'SLACK';
 
 export interface User {
   id: number;
-  email: string;
+  email?: string;
   name: string;
   role: Role;
   picture?: string;

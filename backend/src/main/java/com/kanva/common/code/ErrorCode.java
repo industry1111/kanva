@@ -16,7 +16,7 @@ public enum ErrorCode {
 
     // 401 Unauthorized
     UNAUTHORIZED(401, "인증이 필요합니다."),
-    INVALID_CREDENTIALS(401, "이메일 또는 비밀번호가 일치하지 않습니다."),
+    INVALID_CREDENTIALS(401, "닉네임 또는 비밀번호가 일치하지 않습니다."),
     OAUTH_FAILED(401, "OAuth 인증에 실패했습니다."),
 
     // 404 Not Found
@@ -27,6 +27,7 @@ public enum ErrorCode {
 
     // 409 Conflict
     DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다."),
+    DUPLICATE_NAME(409, "이미 사용 중인 닉네임입니다."),
 
     // 500 Internal Server Error
     INTERNAL_ERROR(500, "서버 내부 오류가 발생했습니다."),

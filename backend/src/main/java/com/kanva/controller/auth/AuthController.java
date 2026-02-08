@@ -27,12 +27,12 @@ public class AuthController {
     private final OAuthService oAuthService;
 
     /**
-     * 회원가입
+     * 회원가입 (가입 후 자동 로그인)
      * POST /api/auth/signup
      */
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<UserResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
-        UserResponse response = userService.signUp(request);
+    public ResponseEntity<ApiResponse<LoginResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
+        LoginResponse response = userService.signUp(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response));
     }

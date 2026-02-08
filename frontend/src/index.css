@@ -678,119 +678,20 @@ button:disabled {
   }
 }
 
-/* ==================== AI Report Card (Dashboard) ==================== */
-
-.ai-report-card {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  grid-column: 1 / -1;
-}
-
-.ai-report-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.ai-icon {
-  font-size: 18px;
-}
-
-.ai-report-card-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.new-badge {
-  padding: 2px 8px;
-  background-color: #8b5cf6;
-  color: white;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-/* AI Report Skeleton */
-.ai-report-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+/* ==================== Common Skeleton ==================== */
 
 .skeleton-line {
   background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 4px;
-}
-
-.skeleton-title {
-  height: 20px;
-  width: 60%;
-}
-
-.skeleton-text {
   height: 14px;
   width: 100%;
 }
 
-.skeleton-text.short {
-  width: 40%;
-}
-
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* AI Report Empty State */
-.ai-report-empty {
-  text-align: center;
-  padding: 16px 0;
-}
-
-.ai-report-empty-text {
-  font-size: 14px;
-  color: #6b7280;
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.ai-report-generate-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background-color: #8b5cf6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ai-report-generate-btn:hover:not(:disabled) {
-  background-color: #7c3aed;
-}
-
-.ai-report-generate-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .btn-spinner {
@@ -800,64 +701,7 @@ button:disabled {
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-}
-
-/* AI Report Content */
-.ai-report-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.ai-report-stats {
-  display: flex;
-  gap: 24px;
-}
-
-.ai-report-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ai-report-stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #374151;
-}
-
-.ai-report-stat-value.trend {
-  font-size: 20px;
-}
-
-.ai-report-stat-label {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.ai-report-summary {
-  font-size: 14px;
-  color: #4b5563;
-  line-height: 1.6;
-  margin: 0;
-}
-
-.ai-report-view-btn {
-  align-self: flex-start;
-  padding: 8px 16px;
-  background-color: transparent;
-  border: 1px solid #8b5cf6;
-  border-radius: 6px;
-  color: #8b5cf6;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ai-report-view-btn:hover {
-  background-color: #8b5cf6;
-  color: white;
+  display: inline-block;
 }
 
 /* ==================== AI Report Page ==================== */
@@ -1138,10 +982,44 @@ button:disabled {
   color: #374151;
 }
 
+.report-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .report-history-rate {
   font-size: 13px;
   font-weight: 600;
   color: #8b5cf6;
+}
+
+.report-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: #9ca3af;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.15s ease;
+  opacity: 0;
+}
+
+.report-history-item:hover .report-delete-btn {
+  opacity: 1;
+}
+
+.report-delete-btn:hover {
+  color: #ef4444;
+  background-color: #fef2f2;
 }
 
 /* Report Content */

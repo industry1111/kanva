@@ -4,17 +4,6 @@ export type ReportStatus = 'GENERATING' | 'COMPLETED' | 'FAILED';
 export type ReportFeedback = 'HELPFUL' | 'NOT_HELPFUL' | 'NEUTRAL';
 export type ReportTone = 'ENCOURAGING' | 'STRICT';
 
-export interface AIReportSummary {
-  id?: number;
-  periodType?: ReportPeriodType;
-  periodStart?: string;
-  periodEnd?: string;
-  completionRate?: number;
-  trend?: string;
-  summary?: string;
-  hasReport: boolean;
-}
-
 export interface AIReport {
   id: number;
   periodType: ReportPeriodType;
