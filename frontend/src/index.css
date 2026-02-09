@@ -788,38 +788,45 @@ button:disabled {
   margin: 0 0 12px 0;
 }
 
-.period-selector-options {
+.period-date-range {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.period-option {
+.period-date-input {
   flex: 1;
   padding: 10px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background-color: #ffffff;
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: 500;
+  color: #374151;
+  font-size: 13px;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
-.period-option:hover:not(:disabled) {
-  background-color: #f9fafb;
+.period-date-input:hover:not(:disabled) {
   border-color: #d1d5db;
 }
 
-.period-option.active {
-  background-color: #8b5cf6;
+.period-date-input:focus {
+  outline: none;
   border-color: #8b5cf6;
-  color: white;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
 }
 
-.period-option:disabled {
+.period-date-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.period-date-separator {
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
 /* Tone Selector */
