@@ -796,6 +796,7 @@ button:disabled {
 
 .period-date-input {
   flex: 1;
+  min-width: 0;
   padding: 10px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -805,6 +806,7 @@ button:disabled {
   font-family: inherit;
   cursor: pointer;
   transition: border-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .period-date-input:hover:not(:disabled) {
