@@ -8,7 +8,6 @@ import FeedbackButton from '../components/report/FeedbackButton';
 import { useAuth } from '../contexts/AuthContext';
 import { reportApi } from '../services/api';
 import type {
-  ReportPeriodType,
   ReportTone,
   ReportFeedback,
   AIReport,
@@ -46,9 +45,23 @@ function getTrendColor(trend?: string): string {
   }
 }
 
+function getDefaultStartDate(): string {
+  const today = new Date();
+  const day = today.getDay();
+  const diff = day === 0 ? 6 : day - 1; // 월요일 기준
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - diff);
+  return monday.toISOString().split('T')[0];
+}
+
+function getToday(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export default function AIReportPage() {
   const { user, logout } = useAuth();
-  const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriodType>('WEEKLY');
+  const [startDate, setStartDate] = useState(getDefaultStartDate);
+  const [endDate, setEndDate] = useState(getToday);
   const [selectedTone, setSelectedTone] = useState<ReportTone>('ENCOURAGING');
   const [reportHistory, setReportHistory] = useState<AIReport[]>([]);
   const [currentReport, setCurrentReport] = useState<AIReportDetail | null>(null);
@@ -97,7 +110,12 @@ export default function AIReportPage() {
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
-      const response = await reportApi.generate({ periodType: selectedPeriod, tone: selectedTone });
+      const response = await reportApi.generate({
+        periodType: 'CUSTOM',
+        periodStart: startDate,
+        periodEnd: endDate,
+        tone: selectedTone,
+      });
       if (response.success) {
         // 히스토리 다시 로드
         await loadReportHistory();
@@ -176,7 +194,11 @@ export default function AIReportPage() {
               {formatDate(currentReport.periodStart)} - {formatDate(currentReport.periodEnd)}
             </h2>
             <span className="report-period-type">
-              {currentReport.periodType === 'WEEKLY' ? '주간 리포트' : '월간 리포트'}
+              {currentReport.periodType === 'WEEKLY'
+                ? '주간 리포트'
+                : currentReport.periodType === 'MONTHLY'
+                  ? '월간 리포트'
+                  : '기간 리포트'}
             </span>
           </div>
         </div>
@@ -249,8 +271,10 @@ export default function AIReportPage() {
       <main className="report-main">
         <aside className="report-sidebar">
           <PeriodSelector
-            selectedPeriod={selectedPeriod}
-            onSelectPeriod={setSelectedPeriod}
+            startDate={startDate}
+            endDate={endDate}
+            onChangeStart={setStartDate}
+            onChangeEnd={setEndDate}
             disabled={isGenerating}
           />
           <ToneSelector
