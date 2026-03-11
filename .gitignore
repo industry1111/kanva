@@ -37,6 +37,9 @@ out/
 .vscode/
 frontend/.vite/
 
+### Claude ###
+.claude/
+
 ### Markdown ###
 *.md
 
