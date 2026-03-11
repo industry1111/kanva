@@ -3,9 +3,9 @@ name: CI
 # 트리거 조건
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 # 실행할 작업 목록
 jobs:
