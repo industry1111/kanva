@@ -24,7 +24,7 @@ jobs:
 
       - name: Gradle 빌드
         working-directory: backend
-        run: ./gradlew build
+        run: chmod +x gradlew && ./gradlew build
 
       - name: Docker Hub 로그인
         uses: docker/login-action@v3
