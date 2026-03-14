@@ -71,29 +71,51 @@ export default function DateBadge({ selectedDate, onSelectDate }: DateBadgeProps
   };
 
   return (
-    <div className="date-nav-wrapper">
-      <div className="date-nav-header">
-        <span className="week-label">{formatWeekLabel(dates)}</span>
-        <div className="date-nav-buttons">
-          <button className="nav-btn" onClick={goToPrevWeek}>←</button>
-          <button className="nav-btn today-btn" onClick={goToToday}>오늘</button>
-          <button className="nav-btn" onClick={goToNextWeek}>→</button>
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[13px] font-semibold text-text">{formatWeekLabel(dates)}</span>
+        <div className="flex gap-1.5">
+          <button
+            className="py-0.5 px-2.5 border border-border rounded-md bg-white text-text text-xs font-medium cursor-pointer transition-colors hover:bg-bg"
+            onClick={goToPrevWeek}
+          >
+            ←
+          </button>
+          <button
+            className="py-0.5 px-2.5 bg-primary border border-primary text-white rounded-md text-xs font-medium cursor-pointer transition-colors hover:bg-primary-hover"
+            onClick={goToToday}
+          >
+            오늘
+          </button>
+          <button
+            className="py-0.5 px-2.5 border border-border rounded-md bg-white text-text text-xs font-medium cursor-pointer transition-colors hover:bg-bg"
+            onClick={goToNextWeek}
+          >
+            →
+          </button>
         </div>
       </div>
-      <div className="date-picker">
+      <div className="flex gap-1.5 justify-between">
         {dates.map((date) => {
           const { day, weekday } = formatDay(date);
           const isSelected = date === selectedDate;
           const isTodayDate = isToday(date);
 
+          const baseClasses = 'flex-1 flex flex-col items-center justify-center h-[44px] border rounded-lg cursor-pointer transition-colors';
+          const stateClasses = isSelected
+            ? 'bg-primary border-primary text-white'
+            : isTodayDate
+              ? 'bg-white border-primary text-primary hover:bg-bg'
+              : 'bg-white border-border text-text hover:bg-bg';
+
           return (
             <button
               key={date}
               onClick={() => onSelectDate(date)}
-              className={`date-item ${isSelected ? 'selected' : ''} ${isTodayDate ? 'today' : ''}`}
+              className={`${baseClasses} ${stateClasses}`}
             >
-              <span className="date-weekday">{weekday}</span>
-              <span className="date-day">{day}</span>
+              <span className="text-[10px] font-medium opacity-70">{weekday}</span>
+              <span className="text-base font-semibold">{day}</span>
             </button>
           );
         })}

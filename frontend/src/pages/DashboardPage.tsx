@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import MonthSelector from '../components/dashboard/MonthSelector';
-import TaskStats from '../components/dashboard/TaskStats';
-import ProductivityChart from '../components/dashboard/ProductivityChart';
+import MonthlyCalendar from '../components/dashboard/MonthlyCalendar';
 import { useAuth } from '../contexts/AuthContext';
 import { dashboardApi } from '../services/api';
 import type { DashboardStats, DailyStat } from '../types/api';
@@ -59,18 +58,18 @@ export default function DashboardPage() {
     }
   };
 
-  // DailyStat을 ProductivityChart용 형식으로 변환
-  const productivityData = dailyStats.map((stat) => ({
-    date: stat.date,
-    completed: stat.completedCount,
-    total: stat.totalCount,
-  }));
-
   if (isLoading) {
     return (
-      <div className="dashboard-container">
-        <div className="dashboard-loading">
-          <div className="dashboard-spinner" />
+      <div className="bg-bg p-4">
+        <div className="flex flex-col items-center justify-center py-16 gap-4 text-text-secondary">
+          <div
+            className="w-8 h-8 rounded-full"
+            style={{
+              border: '3px solid #E2E8F0',
+              borderTopColor: '#0F9D9A',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
           <span>대시보드 로딩 중...</span>
         </div>
       </div>
@@ -78,40 +77,39 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="logo">
-          <span className="logo-icon">K</span>
-          <span className="logo-text">Kanva</span>
-        </div>
-        <h1 className="dashboard-title">Dashboard Overview</h1>
-        <div className="dashboard-user-info">
-          <span className="dashboard-user-name">{user?.name}</span>
-          <button onClick={logout} className="dashboard-logout-btn">
-            로그아웃
-          </button>
-        </div>
-      </header>
-
-      <main className="dashboard-main">
-        <div className={`dashboard-grid ${isDataLoading ? 'loading' : ''}`}>
+    <div className="bg-bg p-4">
+      <main className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between">
           <MonthSelector
             selectedMonth={selectedMonth}
             onSelectMonth={handleMonthChange}
           />
-          <TaskStats
-            completed={taskStats.completed}
-            pending={taskStats.pending}
-            inProgress={taskStats.inProgress}
-          />
-          <ProductivityChart
-            data={productivityData}
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-xs font-medium text-text-secondary">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              완료 {taskStats.completed}
+            </span>
+            <span className="flex items-center gap-1 text-xs font-medium text-text-secondary">
+              <span className="w-1.5 h-1.5 rounded-full bg-border" />
+              미완료 {taskStats.pending + taskStats.inProgress}
+            </span>
+          </div>
+        </div>
+        <div className={`flex flex-col gap-4 ${isDataLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+          <MonthlyCalendar
             selectedMonth={selectedMonth}
           />
         </div>
         {isDataLoading && (
-          <div className="dashboard-data-loading">
-            <div className="dashboard-spinner-small" />
+          <div className="flex justify-center py-3">
+            <div
+              className="w-5 h-5 rounded-full"
+              style={{
+                border: '2px solid #E2E8F0',
+                borderTopColor: '#0F9D9A',
+                animation: 'spin 0.8s linear infinite',
+              }}
+            />
           </div>
         )}
       </main>

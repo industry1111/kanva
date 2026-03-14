@@ -141,6 +141,19 @@ export default function DailyWorkspacePage() {
     }
   };
 
+  const handleToggleTask = async (taskId: number) => {
+    try {
+      const response = await taskApi.toggle(taskId);
+      if (response.success) {
+        setTasks((prev) =>
+          prev.map((task) => (task.id === taskId ? response.data : task))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to toggle task:', err);
+    }
+  };
+
   // Convert API Task to component format
   const tasksForComponent = tasks.map((task) => ({
     id: task.id,
@@ -150,14 +163,14 @@ export default function DailyWorkspacePage() {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div style={styles.loading}>로딩 중...</div>;
+      return <div className="flex items-center justify-center flex-1 text-sm text-text-secondary">로딩 중...</div>;
     }
 
     if (error) {
       return (
-        <div style={styles.error}>
+        <div className="flex flex-col items-center justify-center flex-1 gap-4 text-danger">
           <p>{error}</p>
-          <button onClick={() => loadData(selectedDate)} style={styles.retryButton}>
+          <button onClick={() => loadData(selectedDate)} className="px-3 py-1.5 bg-primary text-white border-none rounded-md cursor-pointer text-sm">
             다시 시도
           </button>
         </div>
@@ -165,15 +178,15 @@ export default function DailyWorkspacePage() {
     }
 
     return (
-      <main className="workspace-main">
-        <div className="workspace-column">
+      <main className="grid grid-cols-5 gap-6 flex-1 min-h-0">
+        <div className="col-span-3 flex flex-col min-w-0 bg-white border border-border rounded-xl p-4">
           <DailyNoteEditor
             ref={noteEditorRef}
             content={dailyNote?.content || ''}
             onSave={handleNoteSave}
           />
         </div>
-        <div className="workspace-column">
+        <div className="col-span-2 flex flex-col min-w-0 bg-white border border-border rounded-xl p-4">
           <TaskList
             tasks={tasksForComponent}
             fullTasks={tasks}
@@ -183,6 +196,7 @@ export default function DailyWorkspacePage() {
             onSeriesExclude={handleSeriesExclude}
             onSeriesStop={handleSeriesStop}
             onUpdate={handleUpdateTask}
+            onToggle={handleToggleTask}
           />
         </div>
       </main>
@@ -190,71 +204,14 @@ export default function DailyWorkspacePage() {
   };
 
   return (
-    <div className="workspace-container">
-      <header className="workspace-header">
-        <div className="logo">
-          <span className="logo-icon">K</span>
-          <span className="logo-text">Kanva</span>
-        </div>
-        <div style={styles.userInfo}>
-          <span style={styles.userName}>{user?.name}</span>
-          <button onClick={logout} style={styles.logoutButton}>
-            로그아웃
-          </button>
-        </div>
-      </header>
-
-      <nav className="date-nav">
+    <div className="flex flex-col bg-bg h-full">
+      <div className="max-w-7xl mx-auto px-6 py-4 w-full flex flex-col flex-1 min-h-0">
+      <nav className="mb-4 pb-2 border-b border-border">
         <DateBadge selectedDate={selectedDate} onSelectDate={handleDateChange} />
       </nav>
 
       {renderContent()}
+      </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  loading: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    fontSize: '1.125rem',
-    color: '#6b7280',
-  },
-  error: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    gap: '1rem',
-    color: '#ef4444',
-  },
-  retryButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#6366f1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-  },
-  userInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  userName: {
-    fontSize: '0.875rem',
-    color: '#374151',
-  },
-  logoutButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: 'transparent',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    color: '#6b7280',
-  },
-};

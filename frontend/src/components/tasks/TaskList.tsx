@@ -20,9 +20,10 @@ interface TaskListProps {
   onSeriesExclude?: (seriesId: number, date: string) => void;
   onSeriesStop?: (seriesId: number, date: string) => void;
   onUpdate?: (taskId: number, request: TaskRequest) => void;
+  onToggle?: (taskId: number) => void;
 }
 
-export default function TaskList({ tasks, fullTasks, selectedDate, onAdd, onDelete, onSeriesExclude, onSeriesStop, onUpdate }: TaskListProps) {
+export default function TaskList({ tasks, fullTasks, selectedDate, onAdd, onDelete, onSeriesExclude, onSeriesStop, onUpdate, onToggle }: TaskListProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [seriesDeleteTarget, setSeriesDeleteTarget] = useState<Task | null>(null);
@@ -75,15 +76,16 @@ export default function TaskList({ tasks, fullTasks, selectedDate, onAdd, onDele
   };
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Tasks</h2>
-      <div style={styles.list}>
+    <div className="flex flex-col h-full">
+      <h2 className="m-0 mb-2 text-[13px] font-semibold text-text">할 일</h2>
+      <div className="flex-1 overflow-y-auto flex flex-col gap-2">
         {sortedTasks.map((task) => (
           <TaskItem
             key={task.id}
             task={task}
             onDelete={handleDelete}
             onClick={handleTaskClick}
+            onToggle={onToggle}
           />
         ))}
         <AddTaskRow onAdd={onAdd} />
@@ -103,20 +105,3 @@ export default function TaskList({ tasks, fullTasks, selectedDate, onAdd, onDele
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  title: {
-    margin: '0 0 12px 0',
-    fontSize: '18px',
-    fontWeight: '600',
-  },
-  list: {
-    flex: 1,
-    overflowY: 'auto',
-  },
-};

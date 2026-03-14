@@ -37,11 +37,11 @@ function getTrendText(trend?: string): string {
 function getTrendColor(trend?: string): string {
   switch (trend) {
     case 'UP':
-      return '#10b981';
+      return '#22C55E';
     case 'DOWN':
       return '#ef4444';
     default:
-      return '#6b7280';
+      return '#64748B';
   }
 }
 
@@ -165,19 +165,22 @@ export default function AIReportPage() {
   const renderReportContent = () => {
     if (isLoading) {
       return (
-        <div className="report-loading">
-          <div className="report-spinner" />
-          <span>리포트 로딩 중...</span>
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-text-secondary">
+          <div
+            className="w-8 h-8 rounded-full"
+            style={{ border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)', animation: 'spin 1s linear infinite' }}
+          />
+          <span className="text-sm">리포트 로딩 중...</span>
         </div>
       );
     }
 
     if (!currentReport) {
       return (
-        <div className="report-empty">
-          <div className="report-empty-icon">📊</div>
-          <h3 className="report-empty-title">생성된 리포트가 없습니다</h3>
-          <p className="report-empty-text">
+        <div className="flex flex-col items-center justify-center py-16 text-center max-w-md mx-auto">
+          <div className="text-2xl mb-2">📊</div>
+          <h3 className="text-base font-semibold text-text mb-1.5">생성된 리포트가 없습니다</h3>
+          <p className="text-xs text-text-secondary leading-relaxed m-0">
             기간을 선택하고 새 리포트를 생성해보세요.
             <br />
             AI가 당신의 생산성을 분석해드립니다.
@@ -187,13 +190,13 @@ export default function AIReportPage() {
     }
 
     return (
-      <div className="report-detail">
-        <div className="report-detail-header">
-          <div className="report-period-info">
-            <h2 className="report-period-title">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between pb-3 border-b border-border">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-base font-semibold text-text m-0">
               {formatDate(currentReport.periodStart)} - {formatDate(currentReport.periodEnd)}
             </h2>
-            <span className="report-period-type">
+            <span className="text-xs text-text-secondary">
               {currentReport.periodType === 'WEEKLY'
                 ? '주간 리포트'
                 : currentReport.periodType === 'MONTHLY'
@@ -203,39 +206,39 @@ export default function AIReportPage() {
           </div>
         </div>
 
-        <div className="report-stats-row">
-          <div className="report-stat-card">
-            <span className="report-stat-value">{currentReport.totalTasks ?? 0}</span>
-            <span className="report-stat-label">전체 할 일</span>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="flex flex-col items-center p-2.5 bg-bg rounded-lg gap-0.5">
+            <span className="text-xl font-bold text-text">{currentReport.totalTasks ?? 0}</span>
+            <span className="text-[11px] text-text-secondary">전체 할 일</span>
           </div>
-          <div className="report-stat-card">
-            <span className="report-stat-value">{currentReport.completedTasks ?? 0}</span>
-            <span className="report-stat-label">완료</span>
+          <div className="flex flex-col items-center p-2.5 bg-bg rounded-lg gap-0.5">
+            <span className="text-xl font-bold text-text">{currentReport.completedTasks ?? 0}</span>
+            <span className="text-[11px] text-text-secondary">완료</span>
           </div>
-          <div className="report-stat-card highlight">
-            <span className="report-stat-value">{currentReport.completionRate ?? 0}%</span>
-            <span className="report-stat-label">완료율</span>
+          <div className="flex flex-col items-center p-2.5 bg-bg rounded-lg gap-0.5">
+            <span className="text-xl font-bold text-primary">{currentReport.completionRate ?? 0}%</span>
+            <span className="text-[11px] text-text-secondary">완료율</span>
           </div>
-          <div className="report-stat-card">
+          <div className="flex flex-col items-center p-2.5 bg-bg rounded-lg gap-0.5">
             <span
-              className="report-stat-value"
+              className="text-xl font-bold"
               style={{ color: getTrendColor(currentReport.trend) }}
             >
               {getTrendText(currentReport.trend)}
             </span>
-            <span className="report-stat-label">트렌드</span>
+            <span className="text-[11px] text-text-secondary">트렌드</span>
             {currentReport.trend === 'NEW' && (
-              <span className="report-stat-sublabel">다음 리포트부터 비교됩니다</span>
+              <span className="text-[10px] text-text-secondary mt-0.5">다음 리포트부터 비교됩니다</span>
             )}
           </div>
         </div>
 
-        <div className="report-summary-section">
-          <h3 className="report-section-title">요약</h3>
-          <p className="report-summary-text">{currentReport.summary}</p>
+        <div className="flex flex-col gap-1.5">
+          <h3 className="text-[13px] font-semibold text-text m-0">요약</h3>
+          <p className="text-[13px] text-text-secondary leading-relaxed m-0">{currentReport.summary}</p>
         </div>
 
-        <div className="report-insights-grid">
+        <div className="grid grid-cols-2 gap-3">
           {currentReport.insights && (
             <InsightCard title="인사이트" content={currentReport.insights} icon="💡" />
           )}
@@ -253,23 +256,9 @@ export default function AIReportPage() {
   };
 
   return (
-    <div className="report-container">
-      <header className="report-header">
-        <div className="logo">
-          <span className="logo-icon">K</span>
-          <span className="logo-text">Kanva</span>
-        </div>
-        <h1 className="report-title">AI Report</h1>
-        <div className="report-user-info">
-          <span className="report-user-name">{user?.name}</span>
-          <button onClick={logout} className="report-logout-btn">
-            로그아웃
-          </button>
-        </div>
-      </header>
-
-      <main className="report-main">
-        <aside className="report-sidebar">
+    <div className="bg-bg p-4">
+      <main className="grid grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <aside className="col-span-1 flex flex-col gap-4">
           <PeriodSelector
             startDate={startDate}
             endDate={endDate}
@@ -283,7 +272,7 @@ export default function AIReportPage() {
             disabled={isGenerating}
           />
           <button
-            className="report-generate-btn"
+            className="flex items-center justify-center gap-2 w-full py-2 bg-primary text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer transition-colors hover:bg-primary-hover disabled:opacity-70 disabled:cursor-not-allowed"
             onClick={handleGenerateReport}
             disabled={isGenerating}
           >
@@ -305,7 +294,7 @@ export default function AIReportPage() {
           />
         </aside>
 
-        <section className="report-content">{renderReportContent()}</section>
+        <section className="col-span-3 min-w-0 bg-white rounded-xl p-4 shadow-sm">{renderReportContent()}</section>
       </main>
     </div>
   );

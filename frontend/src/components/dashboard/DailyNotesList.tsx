@@ -17,20 +17,20 @@ export default function DailyNotesList({ notes, onNoteClick }: DailyNotesListPro
   };
 
   return (
-    <div className="dashboard-card">
-      <h3 className="dashboard-card-title">Daily Notes</h3>
-      <ul className="notes-list">
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-border">
+      <h3 className="text-sm font-semibold text-text mb-3 pb-2 border-b border-border">Daily Notes</h3>
+      <ul className="list-none p-0 m-0 flex flex-col gap-1">
         {notes.length === 0 ? (
-          <li className="notes-list-empty">작성된 노트가 없습니다</li>
+          <li className="text-sm text-text-secondary text-center py-4">작성된 노트가 없습니다</li>
         ) : (
           notes.map((note) => (
             <li
               key={note.date}
-              className="notes-list-item"
+              className="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors hover:bg-bg"
               onClick={() => onNoteClick?.(note.date)}
             >
-              <span className="notes-indicator" />
-              <span className="notes-date">Note {formatDate(note.date)}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+              <span className="text-sm text-text">Note {formatDate(note.date)}</span>
             </li>
           ))
         )}

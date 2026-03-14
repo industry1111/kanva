@@ -4,49 +4,55 @@ interface MonthSelectorProps {
 }
 
 export default function MonthSelector({ selectedMonth, onSelectMonth }: MonthSelectorProps) {
-  // Generate 5 months: selected month in center, 2 before, 2 after
-  const getMonthsRange = (): string[] => {
-    const [year, month] = selectedMonth.split('-').map(Number);
-    const months: string[] = [];
+  const [year, month] = selectedMonth.split('-').map(Number);
 
-    for (let i = -2; i <= 2; i++) {
-      const date = new Date(year, month - 1 + i, 1);
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      months.push(`${y}-${m}`);
-    }
-
-    return months;
+  const changeMonth = (delta: number) => {
+    const date = new Date(year, month - 1 + delta, 1);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    onSelectMonth(`${y}-${m}`);
   };
 
-  const formatShortMonth = (monthStr: string): string => {
-    const [, month] = monthStr.split('-').map(Number);
-    return `${month}월`;
-  };
-
-  const isCurrentMonth = (monthStr: string): boolean => {
+  const isCurrentMonth = (): boolean => {
     const today = new Date();
-    const current = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    return monthStr === current;
+    return year === today.getFullYear() && month === today.getMonth() + 1;
   };
 
-  const months = getMonthsRange();
+  const goToCurrentMonth = () => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    onSelectMonth(`${y}-${m}`);
+  };
 
   return (
-    <div className="dashboard-card month-selector">
-      <h3 className="dashboard-card-title">월 선택</h3>
-      <div className="month-list">
-        {months.map((month) => (
-          <button
-            key={month}
-            className={`month-item ${month === selectedMonth ? 'selected' : ''} ${isCurrentMonth(month) ? 'current' : ''}`}
-            onClick={() => onSelectMonth(month)}
-          >
-            <span className="month-year">{month.split('-')[0]}</span>
-            <span className="month-name">{formatShortMonth(month)}</span>
-          </button>
-        ))}
-      </div>
+    <div className="flex items-center gap-3 py-1">
+      <button
+        className="flex items-center justify-center w-7 h-7 border border-border rounded-md bg-white text-text text-sm cursor-pointer transition-colors hover:bg-bg"
+        onClick={() => changeMonth(-1)}
+        title="이전 달"
+      >
+        ←
+      </button>
+      <button
+        className={`text-[13px] font-semibold bg-transparent border-none px-2 py-0.5 rounded-md ${
+          isCurrentMonth()
+            ? 'text-text'
+            : 'text-primary cursor-pointer hover:bg-bg'
+        }`}
+        onClick={goToCurrentMonth}
+        disabled={isCurrentMonth()}
+        title={isCurrentMonth() ? '' : '이번 달로 이동'}
+      >
+        {year}년 {month}월
+      </button>
+      <button
+        className="flex items-center justify-center w-7 h-7 border border-border rounded-md bg-white text-text text-sm cursor-pointer transition-colors hover:bg-bg"
+        onClick={() => changeMonth(1)}
+        title="다음 달"
+      >
+        →
+      </button>
     </div>
   );
 }

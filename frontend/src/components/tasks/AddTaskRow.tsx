@@ -28,8 +28,11 @@ export default function AddTaskRow({ onAdd }: AddTaskRowProps) {
 
   if (!isEditing) {
     return (
-      <button onClick={() => setIsEditing(true)} style={styles.addButton}>
-        + Add Task
+      <button
+        onClick={() => setIsEditing(true)}
+        className="w-full py-1 px-1.5 bg-transparent border border-dashed border-border rounded-md text-text-secondary cursor-pointer text-[13px]"
+      >
+        + 할 일 추가
       </button>
     );
   }
@@ -43,28 +46,7 @@ export default function AddTaskRow({ onAdd }: AddTaskRowProps) {
       onBlur={handleSubmit}
       placeholder="새 할 일 입력 (Enter로 추가, Esc로 취소)"
       autoFocus
-      style={styles.input}
+      className="w-full py-1 px-1.5 border border-primary rounded-md text-[13px] outline-none box-border"
     />
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  addButton: {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: 'transparent',
-    border: '2px dashed #d1d5db',
-    borderRadius: '8px',
-    color: '#6b7280',
-    cursor: 'pointer',
-    fontSize: '14px',
-  },
-  input: {
-    width: '100%',
-    padding: '12px',
-    border: '2px solid #3b82f6',
-    borderRadius: '8px',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-};

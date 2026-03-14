@@ -4,6 +4,7 @@ import Markdown from 'react-markdown';
 interface DailyNoteEditorProps {
   content: string;
   onSave: (content: string) => void;
+  onExtract?: (content: string) => void;
 }
 
 export interface DailyNoteEditorRef {
@@ -13,7 +14,7 @@ export interface DailyNoteEditorRef {
 type Mode = 'edit' | 'preview';
 
 const DailyNoteEditor = forwardRef<DailyNoteEditorRef, DailyNoteEditorProps>(
-  ({ content, onSave }, ref) => {
+  ({ content, onSave, onExtract }, ref) => {
     const [mode, setMode] = useState<Mode>('preview');
     const [localContent, setLocalContent] = useState(content);
     const originalContentRef = useRef(content);
@@ -52,30 +53,46 @@ const DailyNoteEditor = forwardRef<DailyNoteEditorRef, DailyNoteEditorProps>(
     };
 
     return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <h2 style={styles.title}>
-            Daily Note
-            {isDirty && <span style={styles.dirtyIndicator}>*</span>}
+      <div className="flex flex-col h-full">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="m-0 text-[13px] font-semibold text-text">
+            오늘의 메모
+            {isDirty && <span className="text-primary ml-1">*</span>}
           </h2>
-          <div style={styles.toggleGroup}>
+          <div className="flex items-center gap-1.5">
+            <div className="flex gap-0.5 bg-bg p-0.5 rounded-md">
+              <button
+                onClick={() => setMode('edit')}
+                className={`px-2 py-0.5 border-none rounded text-[11px] font-medium cursor-pointer transition-colors ${
+                  mode === 'edit'
+                    ? 'bg-white text-text shadow-sm'
+                    : 'bg-transparent text-text-secondary'
+                }`}
+              >
+                편집
+              </button>
+              <button
+                onClick={handlePreviewClick}
+                className={`px-2 py-0.5 border-none rounded text-[11px] font-medium cursor-pointer transition-colors ${
+                  mode === 'preview'
+                    ? 'bg-white text-text shadow-sm'
+                    : 'bg-transparent text-text-secondary'
+                }`}
+              >
+                미리보기
+              </button>
+            </div>
             <button
-              onClick={() => setMode('edit')}
-              style={{
-                ...styles.toggleBtn,
-                ...(mode === 'edit' ? styles.toggleBtnActive : {}),
+              className={`px-2.5 py-1 border-none rounded-md bg-primary text-white text-[11px] font-semibold cursor-pointer whitespace-nowrap transition-opacity ${
+                !localContent.trim() ? 'opacity-40 cursor-not-allowed' : ''
+              }`}
+              disabled={!localContent.trim()}
+              onClick={() => {
+                saveIfDirty();
+                onExtract?.(localContent);
               }}
             >
-              Edit
-            </button>
-            <button
-              onClick={handlePreviewClick}
-              style={{
-                ...styles.toggleBtn,
-                ...(mode === 'preview' ? styles.toggleBtnActive : {}),
-              }}
-            >
-              Preview
+              AI 추출
             </button>
           </div>
         </div>
@@ -86,14 +103,14 @@ const DailyNoteEditor = forwardRef<DailyNoteEditorRef, DailyNoteEditorProps>(
             onChange={(e) => setLocalContent(e.target.value)}
             onBlur={handleBlur}
             placeholder="오늘의 메모를 작성하세요... (Markdown 지원)"
-            style={styles.textarea}
+            className="flex-1 min-h-[260px] p-2.5 text-[13px] border border-border rounded-lg resize-none font-mono leading-relaxed text-text outline-none"
           />
         ) : (
-          <div style={styles.preview}>
+          <div className="flex-1 min-h-[260px] p-2.5 text-[13px] border border-border rounded-lg overflow-y-auto leading-relaxed">
             {localContent ? (
               <Markdown>{localContent}</Markdown>
             ) : (
-              <p style={styles.placeholder}>작성된 내용이 없습니다.</p>
+              <p className="text-text-secondary italic m-0">작성된 내용이 없습니다.</p>
             )}
           </div>
         )}
@@ -105,71 +122,3 @@ const DailyNoteEditor = forwardRef<DailyNoteEditorRef, DailyNoteEditorProps>(
 DailyNoteEditor.displayName = 'DailyNoteEditor';
 
 export default DailyNoteEditor;
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '12px',
-  },
-  title: {
-    margin: 0,
-    fontSize: '18px',
-    fontWeight: '600',
-  },
-  dirtyIndicator: {
-    color: '#f59e0b',
-    marginLeft: '4px',
-  },
-  toggleGroup: {
-    display: 'flex',
-    gap: '4px',
-    backgroundColor: '#f3f4f6',
-    padding: '4px',
-    borderRadius: '8px',
-  },
-  toggleBtn: {
-    padding: '6px 12px',
-    border: 'none',
-    borderRadius: '6px',
-    backgroundColor: 'transparent',
-    color: '#6b7280',
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: '500',
-  },
-  toggleBtnActive: {
-    backgroundColor: '#ffffff',
-    color: '#1f2937',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-  },
-  textarea: {
-    flex: 1,
-    padding: '12px',
-    fontSize: '14px',
-    border: '1px solid #e5e7eb',
-    borderRadius: '8px',
-    resize: 'none',
-    fontFamily: 'monospace',
-    lineHeight: '1.6',
-  },
-  preview: {
-    flex: 1,
-    padding: '12px',
-    fontSize: '14px',
-    border: '1px solid #e5e7eb',
-    borderRadius: '8px',
-    overflowY: 'auto',
-    lineHeight: '1.6',
-  },
-  placeholder: {
-    color: '#9ca3af',
-    margin: 0,
-  },
-};

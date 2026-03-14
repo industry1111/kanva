@@ -9,18 +9,33 @@ export default function SeriesDeleteModal({ isOpen, onClose, onSkip, onStop }: S
   if (!isOpen) return null;
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h3 style={styles.title}>반복 Task 삭제</h3>
-        <p style={styles.description}>이 Task는 반복 시리즈입니다.</p>
-        <div style={styles.buttons}>
-          <button style={styles.skipButton} onClick={onSkip}>
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl p-4 w-[300px] shadow-xl mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="m-0 mb-1.5 text-[13px] font-semibold text-text">반복 Task 삭제</h3>
+        <p className="m-0 mb-3 text-[13px] text-text-secondary">이 Task는 반복 시리즈입니다.</p>
+        <div className="flex flex-col gap-1.5">
+          <button
+            className="py-2 px-3 bg-primary text-white border-none rounded-lg text-[13px] font-medium cursor-pointer transition-colors hover:bg-primary-hover"
+            onClick={onSkip}
+          >
             이 날짜만 삭제
           </button>
-          <button style={styles.stopButton} onClick={onStop}>
+          <button
+            className="py-2 px-3 bg-danger text-white border-none rounded-lg text-[13px] font-medium cursor-pointer transition-colors hover:opacity-90"
+            onClick={onStop}
+          >
             이후 반복 중단
           </button>
-          <button style={styles.cancelButton} onClick={onClose}>
+          <button
+            className="py-2 px-3 bg-bg text-text border-none rounded-lg text-[13px] font-medium cursor-pointer transition-colors hover:bg-border/30"
+            onClick={onClose}
+          >
             취소
           </button>
         </div>
@@ -28,71 +43,3 @@ export default function SeriesDeleteModal({ isOpen, onClose, onSkip, onStop }: S
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  },
-  modal: {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '24px',
-    width: '320px',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-  },
-  title: {
-    margin: '0 0 8px 0',
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#111827',
-  },
-  description: {
-    margin: '0 0 20px 0',
-    fontSize: '14px',
-    color: '#6b7280',
-  },
-  buttons: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  skipButton: {
-    padding: '10px 16px',
-    backgroundColor: '#2563eb',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  stopButton: {
-    padding: '10px 16px',
-    backgroundColor: '#ef4444',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  cancelButton: {
-    padding: '10px 16px',
-    backgroundColor: '#f3f4f6',
-    color: '#374151',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-};

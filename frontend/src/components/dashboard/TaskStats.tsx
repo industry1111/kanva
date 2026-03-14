@@ -13,32 +13,38 @@ export default function TaskStats({ completed, pending, inProgress }: TaskStatsP
   };
 
   return (
-    <div className="dashboard-card">
-      <h3 className="dashboard-card-title">Task Stats</h3>
-      <div className="stats-chart">
-        <div className="stats-bar-container">
-          <div
-            className="stats-bar stats-bar-completed"
-            style={{ height: `${getBarHeight(completed)}%` }}
-          />
-          <span className="stats-bar-value">{completed}</span>
-          <span className="stats-bar-label">Completed</span>
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-border">
+      <h3 className="text-sm font-semibold text-text mb-3 pb-2 border-b border-border">Task Stats</h3>
+      <div className="flex items-end justify-around gap-4 h-40">
+        <div className="flex flex-col items-center gap-1 flex-1">
+          <div className="w-full flex justify-center items-end h-28">
+            <div
+              className="w-10 rounded-t-md bg-primary transition-all"
+              style={{ height: `${getBarHeight(completed)}%` }}
+            />
+          </div>
+          <span className="text-sm font-bold text-text">{completed}</span>
+          <span className="text-xs text-text-secondary">Completed</span>
         </div>
-        <div className="stats-bar-container">
-          <div
-            className="stats-bar stats-bar-progress"
-            style={{ height: `${getBarHeight(inProgress)}%` }}
-          />
-          <span className="stats-bar-value">{inProgress}</span>
-          <span className="stats-bar-label">In Progress</span>
+        <div className="flex flex-col items-center gap-1 flex-1">
+          <div className="w-full flex justify-center items-end h-28">
+            <div
+              className="w-10 rounded-t-md bg-blue-400 transition-all"
+              style={{ height: `${getBarHeight(inProgress)}%` }}
+            />
+          </div>
+          <span className="text-sm font-bold text-text">{inProgress}</span>
+          <span className="text-xs text-text-secondary">In Progress</span>
         </div>
-        <div className="stats-bar-container">
-          <div
-            className="stats-bar stats-bar-pending"
-            style={{ height: `${getBarHeight(pending)}%` }}
-          />
-          <span className="stats-bar-value">{pending}</span>
-          <span className="stats-bar-label">Pending</span>
+        <div className="flex flex-col items-center gap-1 flex-1">
+          <div className="w-full flex justify-center items-end h-28">
+            <div
+              className="w-10 rounded-t-md bg-border transition-all"
+              style={{ height: `${getBarHeight(pending)}%` }}
+            />
+          </div>
+          <span className="text-sm font-bold text-text">{pending}</span>
+          <span className="text-xs text-text-secondary">Pending</span>
         </div>
       </div>
     </div>

@@ -68,19 +68,19 @@ export default function ProductivityChart({ data, selectedMonth }: ProductivityC
   };
 
   return (
-    <div className="dashboard-card productivity-card">
-      <div className="productivity-header">
-        <h3 className="dashboard-card-title">Productivity Chart</h3>
-        <div className="productivity-nav">
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-border">
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+        <h3 className="text-sm font-semibold text-text">Productivity Chart</h3>
+        <div className="flex items-center gap-1">
           <button
-            className="productivity-nav-btn"
+            className="flex items-center justify-center w-6 h-6 border border-border rounded bg-white text-text-secondary text-xs cursor-pointer transition-colors hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={handlePrev}
             disabled={!canGoPrev}
           >
             ◀
           </button>
           <button
-            className="productivity-nav-btn"
+            className="flex items-center justify-center w-6 h-6 border border-border rounded bg-white text-text-secondary text-xs cursor-pointer transition-colors hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={handleNext}
             disabled={!canGoNext}
           >
@@ -89,42 +89,63 @@ export default function ProductivityChart({ data, selectedMonth }: ProductivityC
         </div>
       </div>
 
-      <div className="productivity-chart-bar">
-        <div className="chart-bars-container">
+      <div>
+        <div className="flex items-end justify-around gap-2 h-36">
           {visibleData.map((d) => (
-            <div key={d.date} className={`chart-bar-group ${isToday(d.date) ? 'today' : ''}`}>
-              <div className="chart-bar-wrapper">
+            <div
+              key={d.date}
+              className={`flex flex-col items-center flex-1 gap-1 ${
+                isToday(d.date) ? 'relative' : ''
+              }`}
+            >
+              <div className="w-full flex justify-center items-end gap-0.5 h-24">
                 <div
-                  className="chart-bar chart-bar-total"
+                  className="w-3.5 rounded-t-sm bg-border transition-all"
                   style={{ height: `${getBarHeight(d.total)}%` }}
                   title={`전체: ${d.total}`}
                 >
-                  {d.total > 0 && <span className="bar-value">{d.total}</span>}
+                  {d.total > 0 && (
+                    <span className="block text-center text-[9px] font-bold text-text-secondary -mt-3.5">
+                      {d.total}
+                    </span>
+                  )}
                 </div>
                 <div
-                  className="chart-bar chart-bar-completed"
+                  className="w-3.5 rounded-t-sm bg-primary transition-all"
                   style={{ height: `${getBarHeight(d.completed)}%` }}
                   title={`완료: ${d.completed}`}
                 >
-                  {d.completed > 0 && <span className="bar-value">{d.completed}</span>}
+                  {d.completed > 0 && (
+                    <span className="block text-center text-[9px] font-bold text-white -mt-3.5">
+                      {d.completed}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="chart-bar-label">
-                <span className="chart-bar-day">{formatDate(d.date)}</span>
-                <span className="chart-bar-weekday">{formatWeekday(d.date)}</span>
+              <div className="flex flex-col items-center">
+                <span
+                  className={`text-xs font-bold ${
+                    isToday(d.date) ? 'text-primary' : 'text-text'
+                  }`}
+                >
+                  {formatDate(d.date)}
+                </span>
+                <span className="text-[10px] text-text-secondary">
+                  {formatWeekday(d.date)}
+                </span>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="chart-legend">
-          <div className="legend-item">
-            <span className="legend-color legend-total" />
-            <span className="legend-text">전체</span>
+        <div className="flex items-center justify-center gap-4 mt-3 pt-2 border-t border-border">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-border" />
+            <span className="text-[11px] text-text-secondary">전체</span>
           </div>
-          <div className="legend-item">
-            <span className="legend-color legend-completed" />
-            <span className="legend-text">완료</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-primary" />
+            <span className="text-[11px] text-text-secondary">완료</span>
           </div>
         </div>
       </div>
