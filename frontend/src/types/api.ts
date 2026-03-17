@@ -100,6 +100,17 @@ export interface DailyNoteSummary {
   hasContent: boolean;
 }
 
+// Parsing types
+export interface ParsingResult {
+  type: 'WORK' | 'SCHEDULE';
+  title: string;
+  description: string | null;
+  dueDate: string | null;
+  startDateTime: string | null;
+  category: 'WORK' | 'EXERCISE' | 'OTHER';
+  status: 'PENDING' | 'COMPLETED';
+}
+
 // Dashboard types
 export interface DashboardResponse {
   stats: DashboardStats;

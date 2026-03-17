@@ -12,6 +12,7 @@ import type {
   DailyNoteRequest,
   DailyNoteSummary,
   DashboardResponse,
+  ParsingResult,
 } from '../types/api';
 import type {
   AIReport,
@@ -140,6 +141,12 @@ export const dailyNoteApi = {
   getMonthly: async (month: string): Promise<ApiResponse<DailyNoteSummary[]>> => {
     return fetchWithAuth(`/daily-notes/calendar?month=${month}`);
   },
+
+  parse: async (dailyNoteId: number): Promise<ApiResponse<ParsingResult[]>> => {
+    return fetchWithAuth(`/daily-notes/${dailyNoteId}/parse`, {
+      method: 'POST',
+    });
+  },
 };
 
 // Task API
@@ -194,6 +201,13 @@ export const taskApi = {
 
   getOverdue: async (): Promise<ApiResponse<Task[]>> => {
     return fetchWithAuth('/tasks/overdue');
+  },
+
+  batchCreate: async (dailyNoteId: number, tasks: ParsingResult[]): Promise<ApiResponse<Task[]>> => {
+    return fetchWithAuth(`/tasks/batch?dailyNoteId=${dailyNoteId}`, {
+      method: 'POST',
+      body: JSON.stringify(tasks),
+    });
   },
 };
 
