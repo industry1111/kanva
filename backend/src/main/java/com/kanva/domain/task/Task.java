@@ -53,8 +53,16 @@ public class Task extends BaseEntity {
     @Column(nullable = false)
     private Integer position;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private TaskCategory category;
+
     @Builder
-    public Task(DailyNote dailyNote, TaskSeries series, String title, String description, LocalDate dueDate, TaskStatus status, Integer position) {
+    public Task(DailyNote dailyNote, TaskSeries series, String title, String description, LocalDate dueDate, TaskStatus status, Integer position, TaskCategory category, TaskType type) {
         this.dailyNote = dailyNote;
         this.series = series;
         this.taskDate = (series != null) ? dailyNote.getDate() : null;
@@ -63,6 +71,8 @@ public class Task extends BaseEntity {
         this.dueDate = dueDate;
         this.status = status != null ? status : TaskStatus.PENDING;
         this.position = position != null ? position : 0;
+        this.category = category != null ? category : TaskCategory.WORK;
+        this.type = type != null ? type : TaskType.WORK;
     }
 
     // 상태 변경 메서드
@@ -98,6 +108,8 @@ public class Task extends BaseEntity {
     public void updatePosition(Integer position) {
         this.position = position;
     }
+
+    public void updateCategory(TaskCategory category) { this.category = category;}
 
     // DailyNote 연관관계 설정
     public void assignToDailyNote(DailyNote dailyNote) {

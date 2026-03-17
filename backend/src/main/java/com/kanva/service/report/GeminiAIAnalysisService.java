@@ -7,6 +7,7 @@ import com.kanva.domain.dailynote.DailyNote;
 import com.kanva.domain.report.ReportPeriodType;
 import com.kanva.domain.task.Task;
 import com.kanva.domain.task.TaskStatus;
+import com.kanva.service.gemini.GeminiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,7 +58,7 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
 
         try {
             String prompt = buildAnalysisPrompt(context, totalTasks, completedTasks, completionRate, trend);
-            String response = geminiClient.generateContent(prompt);
+            String response = geminiClient.generateJsonContent(prompt,buildSchema());
             log.debug("Gemini raw response: {}", response);
 
             return parseGeminiResponse(response, totalTasks, completedTasks, completionRate, trend);
@@ -307,8 +308,7 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
     private AnalysisResult parseGeminiResponse(String response, int totalTasks, int completedTasks,
                                                 int completionRate, String trend) {
         try {
-            String jsonContent = extractJsonContent(response);
-            JsonNode rootNode = objectMapper.readTree(jsonContent);
+            JsonNode rootNode = objectMapper.readTree(response);
 
             String summary = rootNode.has("summary") ? rootNode.get("summary").asText() : "";
             String insights = rootNode.has("insights") ? rootNode.get("insights").asText() : "";
@@ -352,6 +352,21 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
                 totalTasks, completedTasks, completionRate);
     }
 
+    private Map<String, Object> buildSchema() {
+
+        // responseSchema로 JSON 구조 강제 (summary, insights, recommendations 필수)
+        Map<String, Object> responseSchema = new java.util.HashMap<>();
+        responseSchema.put("type", "OBJECT");
+        responseSchema.put("properties", Map.of(
+                "summary", Map.of("type", "STRING"),
+                "insights", Map.of("type", "STRING"),
+                "recommendations", Map.of("type", "STRING")
+        ));
+        responseSchema.put("required", List.of("summary", "insights", "recommendations"));
+
+        return responseSchema;
+    }
+
     private String generateFallbackInsights(int totalTasks, int completedTasks, int completionRate) {
         StringBuilder sb = new StringBuilder();
         int pending = totalTasks - completedTasks;
@@ -389,31 +404,4 @@ public class GeminiAIAnalysisService implements AIAnalysisService {
         return sb.toString().trim();
     }
 
-    private String extractJsonContent(String response) {
-        // Gemini 2.5 Flash의 thinking 블록 제거
-        String cleaned = response.replaceAll("(?s)<think>.*?</think>", "").trim();
-
-        if (cleaned.contains("```json")) {
-            int start = cleaned.indexOf("```json") + 7;
-            int end = cleaned.indexOf("```", start);
-            if (end > start) {
-                return cleaned.substring(start, end).trim();
-            }
-        }
-        if (cleaned.contains("```")) {
-            int start = cleaned.indexOf("```") + 3;
-            int end = cleaned.indexOf("```", start);
-            if (end > start) {
-                return cleaned.substring(start, end).trim();
-            }
-        }
-        if (cleaned.contains("{")) {
-            int start = cleaned.indexOf("{");
-            int end = cleaned.lastIndexOf("}") + 1;
-            if (end > start) {
-                return cleaned.substring(start, end);
-            }
-        }
-        return cleaned.trim();
-    }
 }

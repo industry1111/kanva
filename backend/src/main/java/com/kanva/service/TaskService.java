@@ -4,6 +4,7 @@ import com.kanva.dto.task.TaskPositionUpdateRequest;
 import com.kanva.dto.task.TaskRequest;
 import com.kanva.dto.task.TaskResponse;
 import com.kanva.dto.task.TaskStatusUpdateRequest;
+import com.kanva.service.parsing.AIParsingService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -54,4 +55,10 @@ public interface TaskService {
      * 마감 지난 Task 목록 조회
      */
     List<TaskResponse> getOverdueTasks(Long userId);
+
+    /**
+     * Task List 저장
+     */
+    List<TaskResponse> saveParsedTasks(Long userId, Long dailyNoteId, List<AIParsingService.ParsingResult> results);
+
 }

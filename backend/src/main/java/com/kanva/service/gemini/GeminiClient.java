@@ -1,4 +1,4 @@
-package com.kanva.service.report;
+package com.kanva.service.gemini;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,13 +25,18 @@ public class GeminiClient {
     private final RestTemplate geminiRestTemplate;
     private final GeminiConfig geminiConfig;
 
+
+    public String generateJsonContent(String prompt,Map<String, Object> responseSchema) {
+        String response = generateContent(prompt,responseSchema);
+        return extractJsonContent(response);
+    }
     /**
      * Gemini API에 텍스트 생성 요청
      *
      * @param prompt 프롬프트
      * @return 생성된 텍스트
      */
-    public String generateContent(String prompt) {
+    private String generateContent(String prompt, Map<String, Object> responseSchema) {
         if (!geminiConfig.isConfigured()) {
             throw new IllegalStateException("Gemini API is not configured");
         }
@@ -50,15 +55,6 @@ public class GeminiClient {
         generationConfig.put("topP", 0.95);
         generationConfig.put("responseMimeType", "application/json");
 
-        // responseSchema로 JSON 구조 강제 (summary, insights, recommendations 필수)
-        Map<String, Object> responseSchema = new java.util.HashMap<>();
-        responseSchema.put("type", "OBJECT");
-        responseSchema.put("properties", Map.of(
-                "summary", Map.of("type", "STRING"),
-                "insights", Map.of("type", "STRING"),
-                "recommendations", Map.of("type", "STRING")
-        ));
-        responseSchema.put("required", List.of("summary", "insights", "recommendations"));
         generationConfig.put("responseSchema", responseSchema);
 
         Map<String, Object> requestBody = Map.of(
@@ -96,6 +92,42 @@ public class GeminiClient {
             log.error("Gemini API call failed: {}", e.getMessage(), e);
             throw new RuntimeException("Gemini API call failed: " + e.getMessage(), e);
         }
+    }
+
+    private String extractJsonContent(String response) {
+        // Gemini 2.5 Flash의 thinking 블록 제거
+        String cleaned = response.replaceAll("(?s)<think>.*?</think>", "").trim();
+
+        if (cleaned.contains("```json")) {
+            int start = cleaned.indexOf("```json") + 7;
+            int end = cleaned.indexOf("```", start);
+            if (end > start) {
+                return cleaned.substring(start, end).trim();
+            }
+        }
+        if (cleaned.contains("```")) {
+            int start = cleaned.indexOf("```") + 3;
+            int end = cleaned.indexOf("```", start);
+            if (end > start) {
+                return cleaned.substring(start, end).trim();
+            }
+        }
+        // JSON 배열 응답 처리 (responseSchema ARRAY 타입)
+        if (cleaned.startsWith("[")) {
+            int start = cleaned.indexOf("[");
+            int end = cleaned.lastIndexOf("]") + 1;
+            if (end > start) {
+                return cleaned.substring(start, end);
+            }
+        }
+        if (cleaned.contains("{")) {
+            int start = cleaned.indexOf("{");
+            int end = cleaned.lastIndexOf("}") + 1;
+            if (end > start) {
+                return cleaned.substring(start, end);
+            }
+        }
+        return cleaned.trim();
     }
 
     public boolean isAvailable() {
