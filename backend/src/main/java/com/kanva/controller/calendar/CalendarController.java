@@ -1,9 +1,9 @@
-package com.kanva.controller.dashboard;
+package com.kanva.controller.calendar;
 
 import com.kanva.common.response.ApiResponse;
-import com.kanva.dto.dashboard.DashboardResponse;
+import com.kanva.dto.calendar.CalendarResponse;
 import com.kanva.security.UserPrincipal;
-import com.kanva.service.DashboardService;
+import com.kanva.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,24 +15,24 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.YearMonth;
 
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping("/api/calendar")
 @RequiredArgsConstructor
-public class DashboardController {
+public class CalendarController {
 
-    private final DashboardService dashboardService;
+    private final CalendarService calendarService;
 
     /**
-     * 대시보드 데이터 조회 (월 기준)
-     * GET /api/dashboard?month=2026-01
+     * 월별 캘린더 태스크 조회
+     * GET /api/calendar?month=2026-03
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
+    public ResponseEntity<ApiResponse<CalendarResponse>> getMonthlyTasks(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam String month) {
         Long userId = principal.getId();
 
         YearMonth yearMonth = YearMonth.parse(month);
-        DashboardResponse response = dashboardService.getDashboard(userId, yearMonth);
+        CalendarResponse response = calendarService.getMonthlyTasks(userId, yearMonth);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }
