@@ -45,7 +45,7 @@ export default function TaskItem({ task, onDelete, onClick, onToggle }: TaskItem
         {onDelete && (
           <button
             onClick={() => onDelete(task.id)}
-            className="opacity-0 group-hover:opacity-100 bg-bg text-danger border-none rounded px-1 py-0.5 text-[11px] cursor-pointer transition-opacity"
+            className="text-gray-300 hover:text-red-500 hover:bg-red-50 bg-transparent border-none rounded px-1 py-0.5 text-[11px] cursor-pointer transition-colors"
             title="삭제"
           >
             x

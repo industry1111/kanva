@@ -3,9 +3,10 @@ import DateBadge from '../components/header/DateBadge';
 import DailyNoteEditor from '../components/note/DailyNoteEditor';
 import type { DailyNoteEditorRef } from '../components/note/DailyNoteEditor';
 import TaskList from '../components/tasks/TaskList';
+import ParseResultModal from '../components/note/ParseResultModal';
 import { useAuth } from '../contexts/AuthContext';
 import { dailyNoteApi, taskApi, taskSeriesApi } from '../services/api';
-import type { Task, DailyNote, TaskRequest } from '../types/api';
+import type { Task, DailyNote, TaskRequest, ParsingResult } from '../types/api';
 
 function getToday(): string {
   return new Date().toISOString().split('T')[0];
@@ -18,6 +19,10 @@ export default function DailyWorkspacePage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [parseResults, setParseResults] = useState<ParsingResult[]>([]);
+  const [isParseModalOpen, setIsParseModalOpen] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+  const [isSavingParsed, setIsSavingParsed] = useState(false);
   const noteEditorRef = useRef<DailyNoteEditorRef>(null);
 
   // Load data for selected date
@@ -154,6 +159,47 @@ export default function DailyWorkspacePage() {
     }
   };
 
+  const handleParse = async () => {
+    if (!dailyNote?.id) return;
+    setIsParsing(true);
+    try {
+      const response = await dailyNoteApi.parse(dailyNote.id);
+      if (response.success && response.data.length > 0) {
+        setParseResults(response.data);
+        setIsParseModalOpen(true);
+      } else if (response.success && response.data.length === 0) {
+        alert('추출된 항목이 없습니다.');
+      } else {
+        alert(response.message || '추출에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Failed to parse:', err);
+      alert('AI 추출에 실패했습니다.');
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const handleSaveParsedTasks = async (selected: ParsingResult[]) => {
+    if (!dailyNote?.id) return;
+    setIsSavingParsed(true);
+    try {
+      const response = await taskApi.batchCreate(dailyNote.id, selected);
+      if (response.success) {
+        setTasks((prev) => [...prev, ...response.data]);
+        setIsParseModalOpen(false);
+        setParseResults([]);
+      } else {
+        alert(response.message || '저장에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Failed to save parsed tasks:', err);
+      alert('저장에 실패했습니다.');
+    } finally {
+      setIsSavingParsed(false);
+    }
+  };
+
   // Convert API Task to component format
   const tasksForComponent = tasks.map((task) => ({
     id: task.id,
@@ -184,6 +230,7 @@ export default function DailyWorkspacePage() {
             ref={noteEditorRef}
             content={dailyNote?.content || ''}
             onSave={handleNoteSave}
+            onExtract={handleParse}
           />
         </div>
         <div className="col-span-2 flex flex-col min-w-0 bg-white border border-border rounded-xl p-4">
@@ -211,6 +258,14 @@ export default function DailyWorkspacePage() {
       </nav>
 
       {renderContent()}
+
+      <ParseResultModal
+        isOpen={isParseModalOpen}
+        results={parseResults}
+        onClose={() => { setIsParseModalOpen(false); setParseResults([]); }}
+        onSave={handleSaveParsedTasks}
+        isSaving={isSavingParsed}
+      />
       </div>
     </div>
   );
