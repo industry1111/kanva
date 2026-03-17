@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import MonthSelector from '../components/dashboard/MonthSelector';
 import MonthlyCalendar from '../components/dashboard/MonthlyCalendar';
 import { useAuth } from '../contexts/AuthContext';
-import { dashboardApi } from '../services/api';
-import type { DashboardStats, DailyStat } from '../types/api';
+import { calendarApi } from '../services/api';
+import type { CalendarTask } from '../types/api';
 
 function getCurrentMonth(): string {
   const today = new Date();
@@ -13,18 +13,18 @@ function getCurrentMonth(): string {
 export default function DashboardPage() {
   useAuth();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
-  const [taskStats, setTaskStats] = useState<DashboardStats>({
-    completed: 0,
-    inProgress: 0,
-    pending: 0,
-    overdue: 0,
-  });
-  const [_dailyStats, setDailyStats] = useState<DailyStat[]>([]);
+  const [tasks, setTasks] = useState<CalendarTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const isInitialLoad = useRef(true);
 
-  const loadDashboardData = useCallback(async (month: string, showFullLoading: boolean) => {
+  const stats = useMemo(() => {
+    const completed = tasks.filter((t) => t.status === 'COMPLETED').length;
+    const pending = tasks.filter((t) => t.status !== 'COMPLETED').length;
+    return { completed, pending };
+  }, [tasks]);
+
+  const loadCalendarData = useCallback(async (month: string, showFullLoading: boolean) => {
     if (showFullLoading) {
       setIsLoading(true);
     } else {
@@ -32,15 +32,13 @@ export default function DashboardPage() {
     }
 
     try {
-      // 단일 API 호출로 모든 데이터 조회
-      const response = await dashboardApi.get(month);
+      const response = await calendarApi.getMonthlyTasks(month);
 
       if (response.success) {
-        setTaskStats(response.data.stats);
-        setDailyStats(response.data.dailyStats);
+        setTasks(response.data.tasks);
       }
     } catch (error) {
-      console.error('Failed to load dashboard data:', error);
+      console.error('Failed to load calendar data:', error);
     } finally {
       setIsLoading(false);
       setIsDataLoading(false);
@@ -48,9 +46,9 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    loadDashboardData(selectedMonth, isInitialLoad.current);
+    loadCalendarData(selectedMonth, isInitialLoad.current);
     isInitialLoad.current = false;
-  }, [selectedMonth, loadDashboardData]);
+  }, [selectedMonth, loadCalendarData]);
 
   const handleMonthChange = (month: string) => {
     if (month !== selectedMonth) {
@@ -87,17 +85,18 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1 text-xs font-medium text-text-secondary">
               <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              완료 {taskStats.completed}
+              완료 {stats.completed}
             </span>
             <span className="flex items-center gap-1 text-xs font-medium text-text-secondary">
               <span className="w-1.5 h-1.5 rounded-full bg-border" />
-              미완료 {taskStats.pending + taskStats.inProgress}
+              미완료 {stats.pending}
             </span>
           </div>
         </div>
         <div className={`flex flex-col gap-4 ${isDataLoading ? 'opacity-60 pointer-events-none' : ''}`}>
           <MonthlyCalendar
             selectedMonth={selectedMonth}
+            tasks={tasks}
           />
         </div>
         {isDataLoading && (

@@ -11,7 +11,7 @@ import type {
   DailyNote,
   DailyNoteRequest,
   DailyNoteSummary,
-  DashboardResponse,
+  CalendarResponse,
   ParsingResult,
 } from '../types/api';
 import type {
@@ -228,10 +228,10 @@ export const taskSeriesApi = {
   },
 };
 
-// Dashboard API
-export const dashboardApi = {
-  get: async (month: string): Promise<ApiResponse<DashboardResponse>> => {
-    return fetchWithAuth(`/dashboard?month=${month}`);
+// Calendar API
+export const calendarApi = {
+  getMonthlyTasks: async (month: string): Promise<ApiResponse<CalendarResponse>> => {
+    return fetchWithAuth(`/calendar?month=${month}`);
   },
 };
 

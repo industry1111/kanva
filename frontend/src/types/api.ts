@@ -111,31 +111,17 @@ export interface ParsingResult {
   status: 'PENDING' | 'COMPLETED';
 }
 
-// Dashboard types
-export interface DashboardResponse {
-  stats: DashboardStats;
-  dailyStats: DailyStat[];
-  overdueTasks: TaskSummary[];
-  dueSoonTasks: TaskSummary[];
+// Calendar types
+export interface CalendarResponse {
+  tasks: CalendarTask[];
 }
 
-export interface DashboardStats {
-  completed: number;
-  inProgress: number;
-  pending: number;
-  overdue: number;
-}
-
-export interface DailyStat {
-  date: string;
-  totalCount: number;
-  completedCount: number;
-}
-
-export interface TaskSummary {
+export interface CalendarTask {
   id: number;
   title: string;
   date: string;
-  dueDate: string | null;
-  status: string;
+  status: TaskStatus;
+  type: 'WORK' | 'SCHEDULE';
+  category: 'WORK' | 'EXERCISE' | 'OTHER';
+  seriesId: number | null;
 }

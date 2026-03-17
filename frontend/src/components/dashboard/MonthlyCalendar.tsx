@@ -1,14 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import type { CalendarTask } from '../../types/api';
 
-type CalendarItemType = 'series' | 'single' | 'schedule';
 type FilterTab = 'all' | 'task' | 'schedule';
-
-interface CalendarTask {
-  title: string;
-  type: CalendarItemType;
-  status: 'completed' | 'pending';
-  time?: string; // 일정용 시간 (e.g. "14:00")
-}
 
 interface CellData {
   day: number;
@@ -26,6 +19,7 @@ interface SeriesBar {
 
 interface MonthlyCalendarProps {
   selectedMonth: string;
+  tasks: CalendarTask[];
   onSelectDate?: (date: string) => void;
 }
 
@@ -37,94 +31,34 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'schedule', label: '일정' },
 ];
 
-const MOCK_TASKS: Record<string, CalendarTask[]> = {
-  '2026-03-01': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-  ],
-  '2026-03-02': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-    { title: 'Kanva 프론트 작업', type: 'single', status: 'completed' },
-  ],
-  '2026-03-03': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-    { title: '인터페이스 구현 회의', type: 'schedule', status: 'completed', time: '14:00' },
-  ],
-  '2026-03-04': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-    { title: 'CI/CD 구축', type: 'single', status: 'completed' },
-  ],
-  '2026-03-05': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-    { title: '블로그 글 작성', type: 'single', status: 'completed' },
-    { title: 'BOM 관리 미팅', type: 'schedule', status: 'completed', time: '10:00' },
-  ],
-  '2026-03-06': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-  ],
-  '2026-03-07': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-  ],
-  '2026-03-08': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-  ],
-  '2026-03-09': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-    { title: 'DB 스키마 설계', type: 'single', status: 'completed' },
-    { title: '주간회의', type: 'schedule', status: 'completed', time: '15:00' },
-  ],
-  '2026-03-10': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-    { title: 'LLM API 연동', type: 'single', status: 'completed' },
-  ],
-  '2026-03-11': [
-    { title: '알고리즘 1문제', type: 'series', status: 'completed' },
-    { title: '캘린더 UI 구현', type: 'single', status: 'completed' },
-  ],
-  '2026-03-12': [
-    { title: '알고리즘 1문제', type: 'series', status: 'pending' },
-    { title: '대시보드 리팩토링', type: 'single', status: 'pending' },
-    { title: '포트폴리오 정리', type: 'single', status: 'pending' },
-    { title: 'LIMS 인터페이스 회의', type: 'schedule', status: 'pending', time: '11:00' },
-  ],
-  '2026-03-13': [
-    { title: '알고리즘 1문제', type: 'series', status: 'pending' },
-    { title: 'Slack 알림 테스트', type: 'single', status: 'pending' },
-  ],
-  '2026-03-14': [
-    { title: '알고리즘 1문제', type: 'series', status: 'pending' },
-  ],
-  '2026-03-15': [
-    { title: '알고리즘 1문제', type: 'series', status: 'pending' },
-  ],
-  '2026-03-16': [
-    { title: '알고리즘 1문제', type: 'series', status: 'pending' },
-    { title: '이력서 업데이트', type: 'single', status: 'pending' },
-    { title: '코드리뷰', type: 'schedule', status: 'pending', time: '14:00' },
-  ],
-  '2026-03-17': [
-    { title: '알고리즘 1문제', type: 'series', status: 'pending' },
-  ],
-  '2026-03-18': [
-    { title: '알고리즘 1문제', type: 'series', status: 'pending' },
-    { title: 'Redis 캐싱 적용', type: 'single', status: 'pending' },
-  ],
-  '2026-03-20': [
-    { title: '스프린트 회고', type: 'schedule', status: 'pending', time: '16:00' },
-  ],
+const SEGMENT_COLORS: Record<string, string> = {
+  COMPLETED: '#0F9D9A',
+  PENDING: '#E2E8F0',
+  IN_PROGRESS: '#E2E8F0',
 };
 
-const SEGMENT_COLORS: Record<string, string> = {
-  completed: '#0F9D9A',
-  pending: '#E2E8F0',
-};
+function groupTasksByDate(tasks: CalendarTask[]): Record<string, CalendarTask[]> {
+  const grouped: Record<string, CalendarTask[]> = {};
+  for (const task of tasks) {
+    if (!grouped[task.date]) {
+      grouped[task.date] = [];
+    }
+    grouped[task.date].push(task);
+  }
+  return grouped;
+}
 
 function filterTasks(tasks: CalendarTask[], filter: FilterTab): CalendarTask[] {
   if (filter === 'all') return tasks;
-  if (filter === 'task') return tasks.filter((t) => t.type === 'series' || t.type === 'single');
-  return tasks.filter((t) => t.type === 'schedule');
+  if (filter === 'task') return tasks.filter((t) => t.type === 'WORK');
+  return tasks.filter((t) => t.type === 'SCHEDULE');
 }
 
-function getSeriesBars(weekCells: CellData[], filter: FilterTab): { bars: SeriesBar[]; laneCount: number } {
+function getSeriesBars(
+  weekCells: CellData[],
+  filter: FilterTab,
+  tasksByDate: Record<string, CalendarTask[]>,
+): { bars: SeriesBar[]; laneCount: number } {
   if (filter === 'schedule') return { bars: [], laneCount: 0 };
 
   const seriesTitles: string[] = [];
@@ -132,11 +66,12 @@ function getSeriesBars(weekCells: CellData[], filter: FilterTab): { bars: Series
 
   weekCells.forEach((cell) => {
     if (!cell.currentMonth) return;
-    (MOCK_TASKS[cell.dateStr] || [])
-      .filter((t) => t.type === 'series')
+    (tasksByDate[cell.dateStr] || [])
+      .filter((t) => t.seriesId != null)
       .forEach((t) => {
-        if (!seen.has(t.title)) {
-          seen.add(t.title);
+        const key = `${t.seriesId}`;
+        if (!seen.has(key)) {
+          seen.add(key);
           seriesTitles.push(t.title);
         }
       });
@@ -162,8 +97,8 @@ function getSeriesBars(weekCells: CellData[], filter: FilterTab): { bars: Series
         return;
       }
 
-      const seriesTask = (MOCK_TASKS[cell.dateStr] || []).find(
-        (t) => t.type === 'series' && t.title === title,
+      const seriesTask = (tasksByDate[cell.dateStr] || []).find(
+        (t) => t.seriesId != null && t.title === title,
       );
 
       if (seriesTask) {
@@ -180,9 +115,11 @@ function getSeriesBars(weekCells: CellData[], filter: FilterTab): { bars: Series
   return { bars, laneCount: seriesTitles.length };
 }
 
-export default function MonthlyCalendar({ selectedMonth, onSelectDate }: MonthlyCalendarProps) {
+export default function MonthlyCalendar({ selectedMonth, tasks, onSelectDate }: MonthlyCalendarProps) {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [year, month] = selectedMonth.split('-').map(Number);
+
+  const tasksByDate = useMemo(() => groupTasksByDate(tasks), [tasks]);
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -257,7 +194,7 @@ export default function MonthlyCalendar({ selectedMonth, onSelectDate }: Monthly
 
       <div>
         {weeks.map((week, weekIdx) => {
-          const { bars, laneCount } = getSeriesBars(week, activeFilter);
+          const { bars, laneCount } = getSeriesBars(week, activeFilter, tasksByDate);
 
           return (
             <div
@@ -314,7 +251,7 @@ export default function MonthlyCalendar({ selectedMonth, onSelectDate }: Monthly
                           <div
                             key={j}
                             className="flex-1 min-w-0"
-                            style={{ backgroundColor: SEGMENT_COLORS[seg.status] || SEGMENT_COLORS.pending }}
+                            style={{ backgroundColor: SEGMENT_COLORS[seg.status] || SEGMENT_COLORS.PENDING }}
                           />
                         ))}
                       </div>
@@ -332,31 +269,30 @@ export default function MonthlyCalendar({ selectedMonth, onSelectDate }: Monthly
               <div className="grid grid-cols-7 flex-1">
                 {week.map((cell) => {
                   const allTasks = cell.currentMonth
-                    ? filterTasks(MOCK_TASKS[cell.dateStr] || [], activeFilter)
+                    ? filterTasks(tasksByDate[cell.dateStr] || [], activeFilter)
                     : [];
-                  const singles = allTasks.filter((t) => t.type === 'single');
-                  const schedules = allTasks.filter((t) => t.type === 'schedule');
+                  const singles = allTasks.filter((t) => t.seriesId == null && t.type === 'WORK');
+                  const schedules = allTasks.filter((t) => t.type === 'SCHEDULE');
 
                   return (
                     <div key={cell.dateStr} className="flex flex-col gap-px py-px px-0.5">
-                      {schedules.map((task, i) => (
+                      {schedules.map((task) => (
                         <div
-                          key={`s-${i}`}
+                          key={`s-${task.id}`}
                           className={`py-1 px-2 rounded-md text-xs whitespace-nowrap overflow-hidden text-ellipsis leading-snug cursor-pointer transition-all border-l-2 ${
-                            task.status === 'completed'
+                            task.status === 'COMPLETED'
                               ? 'bg-bg text-text border-l-success line-through decoration-border'
                               : 'bg-bg text-text-secondary border-l-border'
                           }`}
                         >
-                          <span className="font-semibold mr-0.5 text-[10px]">{task.time}</span>
                           {task.title}
                         </div>
                       ))}
-                      {singles.map((task, i) => (
+                      {singles.map((task) => (
                         <div
-                          key={`t-${i}`}
+                          key={`t-${task.id}`}
                           className={`py-1 px-2 rounded-md text-xs whitespace-nowrap overflow-hidden text-ellipsis leading-snug cursor-pointer transition-all border-l-2 ${
-                            task.status === 'completed'
+                            task.status === 'COMPLETED'
                               ? 'bg-bg text-text border-l-primary line-through decoration-border'
                               : 'bg-bg text-text-secondary border-l-border'
                           }`}
