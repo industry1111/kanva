@@ -4,6 +4,7 @@ import com.kanva.common.response.ApiResponse;
 import com.kanva.dto.dailynote.*;
 import com.kanva.security.UserPrincipal;
 import com.kanva.service.DailyNoteService;
+import com.kanva.service.parsing.AIParsingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -78,4 +79,17 @@ public class DailyNoteController {
         List<DailyNoteSummaryResponse> response = dailyNoteService.getMonthlyNotes(userId, month);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
+
+    /**
+     * DailyNote 파싱 함수
+     * POST /api/daily-notes/
+     */
+    @PostMapping("/{id}/parse")
+    public ResponseEntity<ApiResponse<List<AIParsingService.ParsingResult>>> parse(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id) {
+        List<AIParsingService.ParsingResult> results = dailyNoteService.parseDailyNote(id);
+        return ResponseEntity.ok(ApiResponse.ok(results));
+    }
+
 }

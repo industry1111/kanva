@@ -7,6 +7,7 @@ import com.kanva.dto.task.TaskResponse;
 import com.kanva.dto.task.TaskStatusUpdateRequest;
 import com.kanva.security.UserPrincipal;
 import com.kanva.service.TaskService;
+import com.kanva.service.parsing.AIParsingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -153,4 +154,22 @@ public class TaskController {
         List<TaskResponse> response = taskService.getOverdueTasks(userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
+
+    /**
+     * 파싱된 Task List 저장
+     * POST /api/tasks/batch?dailyNoteId=123
+     */
+    @PostMapping("/batch")
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> saveParsedTasks(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam Long dailyNoteId,
+            @RequestBody List<AIParsingService.ParsingResult> results) {
+        Long userId = principal.getId();
+
+        List<TaskResponse> response = taskService.saveParsedTasks(userId, dailyNoteId, results);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created(response));
+    }
+
 }

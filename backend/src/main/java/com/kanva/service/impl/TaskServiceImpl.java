@@ -17,6 +17,7 @@ import com.kanva.exception.TaskStatusChangeNotAllowedException;
 import com.kanva.exception.UserNotFoundException;
 import com.kanva.service.TaskSeriesService;
 import com.kanva.service.TaskService;
+import com.kanva.service.parsing.AIParsingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -196,6 +198,38 @@ public class TaskServiceImpl implements TaskService {
                 .map(TaskResponse::from)
                 .toList();
     }
+
+    @Override
+    @Transactional
+    public List<TaskResponse> saveParsedTasks(Long userId, Long dailyNoteId, List<AIParsingService.ParsingResult> results) {
+        DailyNote dailyNote = dailyNoteRepository.findById(dailyNoteId)
+                .orElseThrow(() -> new RuntimeException("DailyNote not found"));
+
+        // 본인 소유 확인
+        if (!dailyNote.getUser().getId().equals(userId)) {
+            throw new RuntimeException("권한 없음");
+        }
+
+        Integer maxPosition = taskRepository.findMaxPositionByDailyNoteId(dailyNoteId);
+        int position = (maxPosition != null) ? maxPosition + 1 : 0;
+
+        List<Task> tasks = new ArrayList<>();
+        for (AIParsingService.ParsingResult result : results) {
+            Task task = Task.builder()
+                    .dailyNote(dailyNote)
+                    .title(result.getTitle())
+                    .description(result.getDescription())
+                    .dueDate(result.getDueDate() != null ? LocalDate.parse(result.getDueDate()) : null)
+                    .status(TaskStatus.valueOf(result.getStatus()))
+                    .position(position++)
+                    .build();
+            tasks.add(task);
+        }
+
+        List<Task> savedTasks = taskRepository.saveAll(tasks);
+        return savedTasks.stream().map(TaskResponse::from).toList();
+    }
+
 
     /**
      * 미래 날짜 Task 상태 변경 불가 검증 (Seoul Clock 기준)

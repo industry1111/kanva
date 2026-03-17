@@ -2,14 +2,20 @@ package com.kanva.service.impl;
 
 import com.kanva.domain.dailynote.DailyNote;
 import com.kanva.domain.dailynote.DailyNoteRepository;
+import com.kanva.domain.task.Task;
+import com.kanva.domain.task.TaskRepository;
 import com.kanva.domain.user.User;
 import com.kanva.domain.user.UserRepository;
 import com.kanva.dto.dailynote.*;
 import com.kanva.exception.UserNotFoundException;
 import com.kanva.service.DailyNoteService;
+import com.kanva.service.parsing.AIParsingService;
+import com.kanva.service.parsing.GeminiAIParsingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.kanva.service.parsing.AIParsingService.ParsingContext;
+import com.kanva.service.parsing.AIParsingService.ParsingResult;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -22,6 +28,8 @@ public class DailyNoteServiceImpl implements DailyNoteService {
 
     private final DailyNoteRepository dailyNoteRepository;
     private final UserRepository userRepository;
+    private final TaskRepository taskRepository;
+    private final GeminiAIParsingService geminiAIParsingService;
 
     @Override
     @Transactional
@@ -80,5 +88,19 @@ public class DailyNoteServiceImpl implements DailyNoteService {
                 .build();
 
         return dailyNoteRepository.save(dailyNote);
+    }
+
+    public List<ParsingResult> parseDailyNote(Long dailyNoteId) {
+        DailyNote dailyNote = dailyNoteRepository.findById(dailyNoteId)
+                .orElseThrow(() -> new RuntimeException("DailyNote Not found"));
+
+        List<Task> taskList = taskRepository.findByDailyNoteOrderByPositionAsc(dailyNote);
+
+        ParsingContext parsingContext = ParsingContext.builder()
+                .dailyNote(dailyNote)
+                .registeredTasks(taskList)
+                .build();
+
+        return geminiAIParsingService.parsing(parsingContext);
     }
 }

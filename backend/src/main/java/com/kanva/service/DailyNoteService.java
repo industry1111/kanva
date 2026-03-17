@@ -1,6 +1,7 @@
 package com.kanva.service;
 
 import com.kanva.dto.dailynote.*;
+import com.kanva.service.parsing.AIParsingService;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -15,4 +16,6 @@ public interface DailyNoteService {
     void deleteDailyNote(Long userId, LocalDate date);
 
     List<DailyNoteSummaryResponse> getMonthlyNotes(Long userId, YearMonth yearMonth);
+
+    List<AIParsingService.ParsingResult> parseDailyNote(Long dailyNoteId);
 }
