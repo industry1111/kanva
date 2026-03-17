@@ -72,12 +72,16 @@ jobs:
            username: ${{ secrets.EC2_USERNAME }}
            key: ${{ secrets.EC2_KEY }}
            script: |
+             # 백엔드 배포
              sudo kill $(sudo lsof -t -i:8080) || true
              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/kanva-backend:latest
              docker stop kanva-backend || true
              docker rm kanva-backend || true
              docker run -d --name kanva-backend -p 8080:8080 --env-file ~/.env ${{ secrets.DOCKERHUB_USERNAME }}/kanva-backend:latest
-          
 
-
+             # 프론트엔드 배포
+             cd ~/kanva/frontend
+             git pull
+             npm ci
+             npm run build
 
