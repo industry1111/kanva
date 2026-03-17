@@ -72,6 +72,9 @@ jobs:
            username: ${{ secrets.EC2_USERNAME }}
            key: ${{ secrets.EC2_KEY }}
            script: |
+             export NVM_DIR="$HOME/.nvm"
+             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
              # 백엔드 배포
              sudo kill $(sudo lsof -t -i:8080) || true
              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/kanva-backend:latest
