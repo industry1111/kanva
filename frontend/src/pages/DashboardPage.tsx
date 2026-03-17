@@ -11,7 +11,7 @@ function getCurrentMonth(): string {
 }
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const _auth = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [taskStats, setTaskStats] = useState<DashboardStats>({
     completed: 0,
@@ -19,7 +19,7 @@ export default function DashboardPage() {
     pending: 0,
     overdue: 0,
   });
-  const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
+  const [_dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const isInitialLoad = useRef(true);

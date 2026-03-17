@@ -13,7 +13,7 @@ function getToday(): string {
 }
 
 export default function DailyWorkspacePage() {
-  const { user, logout } = useAuth();
+  const _auth = useAuth();
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [dailyNote, setDailyNote] = useState<DailyNote | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -21,7 +21,7 @@ export default function DailyWorkspacePage() {
   const [error, setError] = useState<string | null>(null);
   const [parseResults, setParseResults] = useState<ParsingResult[]>([]);
   const [isParseModalOpen, setIsParseModalOpen] = useState(false);
-  const [isParsing, setIsParsing] = useState(false);
+  const [_isParsing, setIsParsing] = useState(false);
   const [isSavingParsed, setIsSavingParsed] = useState(false);
   const noteEditorRef = useRef<DailyNoteEditorRef>(null);
 

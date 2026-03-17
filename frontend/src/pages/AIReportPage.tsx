@@ -59,7 +59,7 @@ function getToday(): string {
 }
 
 export default function AIReportPage() {
-  const { user, logout } = useAuth();
+  const _auth = useAuth();
   const [startDate, setStartDate] = useState(getDefaultStartDate);
   const [endDate, setEndDate] = useState(getToday);
   const [selectedTone, setSelectedTone] = useState<ReportTone>('ENCOURAGING');
