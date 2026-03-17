@@ -84,7 +84,8 @@ jobs:
 
              # 프론트엔드 배포
              cd ~/kanva/frontend
-             git pull
+             git fetch origin
+             git reset --hard origin/master
              npm ci
              npm run build
 
