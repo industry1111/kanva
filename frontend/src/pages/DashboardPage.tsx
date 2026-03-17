@@ -11,7 +11,7 @@ function getCurrentMonth(): string {
 }
 
 export default function DashboardPage() {
-  const _auth = useAuth();
+  useAuth();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [taskStats, setTaskStats] = useState<DashboardStats>({
     completed: 0,

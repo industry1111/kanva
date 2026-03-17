@@ -13,7 +13,7 @@ function getToday(): string {
 }
 
 export default function DailyWorkspacePage() {
-  const _auth = useAuth();
+  useAuth();
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [dailyNote, setDailyNote] = useState<DailyNote | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
