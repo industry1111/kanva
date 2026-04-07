@@ -326,7 +326,6 @@ kanva/
 ## Development Rules
 
 ### Git
-- 커밋 메시지에 `Co-Authored-By` 라인 금지
 - 한글 또는 영어로 간결하게 작성
 
 ### Code Style
