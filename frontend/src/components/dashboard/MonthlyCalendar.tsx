@@ -199,23 +199,23 @@ export default function MonthlyCalendar({ selectedMonth, tasks, onSelectDate }: 
           return (
             <div
               key={weekIdx}
-              className={`flex flex-col border-b border-border min-h-[96px] ${
+              className={`flex flex-col border-b border-border h-[120px] ${
                 weekIdx === weeks.length - 1 ? 'border-b-0' : ''
               }`}
             >
-              <div className="grid grid-cols-7">
+              <div className="grid grid-cols-7 border-b border-border/50">
                 {week.map((cell, dayIdx) => {
                   const isToday = cell.dateStr === todayStr;
                   return (
                     <div
                       key={cell.dateStr}
-                      className={`py-0.5 px-1.5 cursor-pointer transition-colors hover:bg-bg ${
+                      className={`py-1 px-1.5 cursor-pointer transition-colors hover:bg-bg ${
                         !cell.currentMonth ? 'opacity-35' : ''
-                      }`}
+                      } ${dayIdx < 6 ? 'border-r border-border/30' : ''}`}
                       onClick={() => cell.currentMonth && onSelectDate?.(cell.dateStr)}
                     >
                       <span
-                        className={`text-xs font-bold w-[22px] h-[22px] inline-flex items-center justify-center rounded-full transition-all ${
+                        className={`text-[11px] font-bold w-[22px] h-[22px] inline-flex items-center justify-center rounded-full transition-all ${
                           isToday
                             ? 'bg-primary text-white font-bold shadow-sm'
                             : cell.currentMonth && dayIdx === 0
@@ -266,40 +266,43 @@ export default function MonthlyCalendar({ selectedMonth, tasks, onSelectDate }: 
                 </div>
               )}
 
-              <div className="grid grid-cols-7 flex-1">
+              <div className="grid grid-cols-7 flex-1 overflow-hidden">
                 {week.map((cell) => {
                   const allTasks = cell.currentMonth
                     ? filterTasks(tasksByDate[cell.dateStr] || [], activeFilter)
                     : [];
                   const singles = allTasks.filter((t) => t.seriesId == null && t.type === 'WORK');
                   const schedules = allTasks.filter((t) => t.type === 'SCHEDULE');
+                  const combined = [...schedules, ...singles];
+                  const visible = combined.slice(0, 3);
+                  const moreCount = combined.length - 3;
 
                   return (
-                    <div key={cell.dateStr} className="flex flex-col gap-px py-px px-0.5">
-                      {schedules.map((task) => (
-                        <div
-                          key={`s-${task.id}`}
-                          className={`py-1 px-2 rounded-md text-xs whitespace-nowrap overflow-hidden text-ellipsis leading-snug cursor-pointer transition-all border-l-2 ${
-                            task.status === 'COMPLETED'
-                              ? 'bg-bg text-text border-l-success line-through decoration-border'
-                              : 'bg-bg text-text-secondary border-l-border'
-                          }`}
-                        >
-                          {task.title}
-                        </div>
-                      ))}
-                      {singles.map((task) => (
-                        <div
-                          key={`t-${task.id}`}
-                          className={`py-1 px-2 rounded-md text-xs whitespace-nowrap overflow-hidden text-ellipsis leading-snug cursor-pointer transition-all border-l-2 ${
-                            task.status === 'COMPLETED'
-                              ? 'bg-bg text-text border-l-primary line-through decoration-border'
-                              : 'bg-bg text-text-secondary border-l-border'
-                          }`}
-                        >
-                          {task.title}
-                        </div>
-                      ))}
+                    <div key={cell.dateStr} className="flex flex-col gap-px py-0.5 px-0.5 overflow-hidden border-r border-border/30 last:border-r-0">
+                      {visible.map((task) => {
+                        const isSchedule = task.type === 'SCHEDULE';
+                        return (
+                          <div
+                            key={`${isSchedule ? 's' : 't'}-${task.id}`}
+                            className={`py-0.5 px-1.5 rounded text-[10px] whitespace-nowrap overflow-hidden text-ellipsis leading-snug cursor-pointer transition-all border-l-2 ${
+                              task.status === 'COMPLETED'
+                                ? isSchedule
+                                  ? 'bg-bg text-text border-l-success line-through decoration-border'
+                                  : 'bg-bg text-text border-l-primary line-through decoration-border'
+                                : isSchedule
+                                  ? 'bg-bg text-text-secondary border-l-border'
+                                  : 'bg-bg text-text-secondary border-l-border'
+                            }`}
+                          >
+                            {task.title}
+                          </div>
+                        );
+                      })}
+                      {moreCount > 0 && (
+                        <span className="text-[10px] text-text-secondary font-medium px-1.5 cursor-pointer hover:text-primary">
+                          +{moreCount}
+                        </span>
+                      )}
                     </div>
                   );
                 })}

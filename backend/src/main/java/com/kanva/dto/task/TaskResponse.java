@@ -1,7 +1,9 @@
 package com.kanva.dto.task;
 
 import com.kanva.domain.task.Task;
+import com.kanva.domain.task.TaskCategory;
 import com.kanva.domain.task.TaskStatus;
+import com.kanva.domain.task.TaskType;
 import com.kanva.domain.taskseries.CompletionPolicy;
 import com.kanva.domain.taskseries.TaskSeries;
 import lombok.Builder;
@@ -20,6 +22,8 @@ public class TaskResponse {
     private String title;
     private String description;
     private TaskStatus status;
+    private TaskType type;
+    private TaskCategory category;
     private Integer position;
     private boolean overdue;
     private boolean repeatDaily;
@@ -42,6 +46,8 @@ public class TaskResponse {
                 .title(task.getTitle())
                 .description(task.getDescription())
                 .status(task.getStatus())
+                .type(task.getType())
+                .category(task.getCategory())
                 .position(task.getPosition())
                 .overdue(task.isOverdue())
                 .repeatDaily(isRepeatDaily)

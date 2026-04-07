@@ -200,8 +200,12 @@ export default function DailyWorkspacePage() {
     }
   };
 
+  // Split tasks by type
+  const workTasks = tasks.filter((t) => t.type !== 'SCHEDULE');
+  const scheduleTasks = tasks.filter((t) => t.type === 'SCHEDULE');
+
   // Convert API Task to component format
-  const tasksForComponent = tasks.map((task) => ({
+  const tasksForComponent = workTasks.map((task) => ({
     id: task.id,
     title: task.title,
     status: task.status,
@@ -233,18 +237,66 @@ export default function DailyWorkspacePage() {
             onExtract={handleParse}
           />
         </div>
-        <div className="col-span-2 flex flex-col min-w-0 bg-white border border-border rounded-xl p-4">
-          <TaskList
-            tasks={tasksForComponent}
-            fullTasks={tasks}
-            selectedDate={selectedDate}
-            onAdd={handleAddTask}
-            onDelete={handleDeleteTask}
-            onSeriesExclude={handleSeriesExclude}
-            onSeriesStop={handleSeriesStop}
-            onUpdate={handleUpdateTask}
-            onToggle={handleToggleTask}
-          />
+        <div className="col-span-2 flex flex-col min-w-0 gap-4">
+          <div className="flex flex-col bg-white border border-border rounded-xl p-4">
+            <TaskList
+              tasks={tasksForComponent}
+              fullTasks={workTasks}
+              selectedDate={selectedDate}
+              onAdd={handleAddTask}
+              onDelete={handleDeleteTask}
+              onSeriesExclude={handleSeriesExclude}
+              onSeriesStop={handleSeriesStop}
+              onUpdate={handleUpdateTask}
+              onToggle={handleToggleTask}
+            />
+          </div>
+          <div className="flex flex-col bg-white border border-border rounded-xl p-4">
+            <h2 className="m-0 mb-2 text-[13px] font-semibold text-text">일정</h2>
+            {scheduleTasks.length === 0 ? (
+              <p className="text-sm text-text-secondary text-center py-4 m-0">등록된 일정이 없습니다</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {scheduleTasks.map((schedule) => {
+                  const isCompleted = schedule.status === 'COMPLETED';
+                  return (
+                    <div
+                      key={schedule.id}
+                      className="flex items-center gap-1.5 py-1 px-1.5 rounded-md group hover:bg-bg transition-colors"
+                    >
+                      <span className={`flex-1 text-[13px] text-text ${isCompleted ? 'line-through opacity-50' : ''}`}>
+                        {schedule.title}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          className="bg-transparent border-none cursor-pointer p-0 flex items-center gap-1"
+                          onClick={() => handleToggleTask(schedule.id)}
+                          title={isCompleted ? '미완료로 변경' : '완료로 변경'}
+                        >
+                          <span className={`w-7 h-3.5 rounded-full relative inline-block transition-colors ${isCompleted ? 'bg-primary' : 'bg-border'}`}>
+                            <span
+                              className="absolute top-0.5 left-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform shadow-sm"
+                              style={{ transform: isCompleted ? 'translateX(14px)' : 'translateX(0)' }}
+                            />
+                          </span>
+                          <span className={`text-[11px] font-medium ${isCompleted ? 'text-primary' : 'text-text-secondary'}`}>
+                            {isCompleted ? '완료' : '미완료'}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTask(schedule.id)}
+                          className="text-gray-300 hover:text-red-500 hover:bg-red-50 bg-transparent border-none rounded px-1 py-0.5 text-[11px] cursor-pointer transition-colors"
+                          title="삭제"
+                        >
+                          x
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     );

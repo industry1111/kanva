@@ -47,6 +47,9 @@ export interface OAuthCallbackRequest {
 // Task types
 export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 
+export type TaskType = 'WORK' | 'SCHEDULE';
+export type TaskCategory = 'WORK' | 'EXERCISE' | 'OTHER';
+
 export interface Task {
   id: number;
   dailyNoteId: number;
@@ -54,6 +57,8 @@ export interface Task {
   title: string;
   description?: string;
   status: TaskStatus;
+  type: TaskType;
+  category: TaskCategory;
   position: number;
   overdue: boolean;
   repeatDaily: boolean;

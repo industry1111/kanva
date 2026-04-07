@@ -18,12 +18,16 @@ export default function ParseResultModal({
   isSaving,
 }: ParseResultModalProps) {
   const [checkedIndexes, setCheckedIndexes] = useState<Set<number>>(new Set());
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editedResults, setEditedResults] = useState<ParsingResult[]>([]);
 
   useEffect(() => {
     setCheckedIndexes(new Set(results.map((_, i) => i)));
+    setEditedResults([...results]);
+    setEditingIndex(null);
   }, [results]);
 
-  if (results.length === 0) return null;
+  if (editedResults.length === 0) return null;
 
   const handleToggle = (index: number) => {
     setCheckedIndexes((prev) => {
@@ -35,11 +39,19 @@ export default function ParseResultModal({
   };
 
   const handleSave = () => {
-    onSave(results.filter((_, i) => checkedIndexes.has(i)));
+    onSave(editedResults.filter((_, i) => checkedIndexes.has(i)));
   };
 
-  const workItems = results.map((r, i) => ({ result: r, index: i })).filter(({ result }) => result.type === 'WORK');
-  const scheduleItems = results.map((r, i) => ({ result: r, index: i })).filter(({ result }) => result.type === 'SCHEDULE');
+  const handleEdit = (index: number, field: keyof ParsingResult, value: string | null) => {
+    setEditedResults((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value } as ParsingResult;
+      return next;
+    });
+  };
+
+  const workItems = editedResults.map((r, i) => ({ result: r, index: i })).filter(({ result }) => result.type === 'WORK');
+  const scheduleItems = editedResults.map((r, i) => ({ result: r, index: i })).filter(({ result }) => result.type === 'SCHEDULE');
 
   const categoryLabel = (category: string) => {
     switch (category) {
@@ -49,32 +61,125 @@ export default function ParseResultModal({
     }
   };
 
-  const renderItem = (result: ParsingResult, index: number) => (
-    <label key={index} className="flex items-start gap-3 py-2.5 px-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50 rounded">
-      <input
-        type="checkbox"
-        checked={checkedIndexes.has(index)}
-        onChange={() => handleToggle(index)}
-        className="w-4 h-4 mt-0.5 shrink-0 cursor-pointer accent-primary"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-medium text-text flex items-center gap-1.5">
-          {result.title}
-          {result.status === 'COMPLETED' && (
-            <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded">완료</span>
-          )}
+  const renderItem = (result: ParsingResult, index: number) => {
+    const isEditing = editingIndex === index;
+
+    if (isEditing) {
+      return (
+        <div key={index} className="py-2.5 px-2 border-b border-gray-100 bg-gray-50 rounded">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={checkedIndexes.has(index)}
+              onChange={() => handleToggle(index)}
+              className="w-4 h-4 mt-1 shrink-0 cursor-pointer accent-primary"
+            />
+            <div className="flex-1 flex flex-col gap-2">
+              <input
+                type="text"
+                value={result.title}
+                onChange={(e) => handleEdit(index, 'title', e.target.value)}
+                className="w-full px-2 py-1 text-[13px] border border-border rounded bg-white text-text"
+                placeholder="제목"
+              />
+              <input
+                type="text"
+                value={result.description || ''}
+                onChange={(e) => handleEdit(index, 'description', e.target.value || null)}
+                className="w-full px-2 py-1 text-[11px] border border-border rounded bg-white text-text"
+                placeholder="설명 (선택)"
+              />
+              <div className="flex gap-2 items-center flex-wrap">
+                <select
+                  value={result.type}
+                  onChange={(e) => handleEdit(index, 'type', e.target.value)}
+                  className="px-2 py-1 text-[11px] border border-border rounded bg-white text-text"
+                >
+                  <option value="WORK">할 일</option>
+                  <option value="SCHEDULE">일정</option>
+                </select>
+                <select
+                  value={result.category}
+                  onChange={(e) => handleEdit(index, 'category', e.target.value)}
+                  className="px-2 py-1 text-[11px] border border-border rounded bg-white text-text"
+                >
+                  <option value="WORK">업무</option>
+                  <option value="EXERCISE">운동</option>
+                  <option value="OTHER">기타</option>
+                </select>
+                <select
+                  value={result.status}
+                  onChange={(e) => handleEdit(index, 'status', e.target.value)}
+                  className="px-2 py-1 text-[11px] border border-border rounded bg-white text-text"
+                >
+                  <option value="PENDING">미완료</option>
+                  <option value="COMPLETED">완료</option>
+                </select>
+              </div>
+              <div className="flex gap-2 items-center">
+                <label className="text-[11px] text-text-secondary">마감일</label>
+                <input
+                  type="date"
+                  value={result.dueDate || ''}
+                  onChange={(e) => handleEdit(index, 'dueDate', e.target.value || null)}
+                  className="px-2 py-1 text-[11px] border border-border rounded bg-white text-text"
+                />
+                <label className="text-[11px] text-text-secondary ml-2">시작일시</label>
+                <input
+                  type="datetime-local"
+                  value={result.startDateTime || ''}
+                  onChange={(e) => handleEdit(index, 'startDateTime', e.target.value || null)}
+                  className="px-2 py-1 text-[11px] border border-border rounded bg-white text-text"
+                />
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setEditingIndex(null)}
+                  className="px-2.5 py-1 text-[11px] bg-primary text-white border-none rounded cursor-pointer hover:bg-primary-hover"
+                >
+                  확인
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        {result.description && (
-          <div className="text-[11px] text-text-secondary mt-0.5 truncate">{result.description}</div>
-        )}
-        <div className="text-[11px] text-text-secondary mt-1 flex gap-2 items-center">
-          <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px]">{categoryLabel(result.category)}</span>
-          {result.dueDate && <span>마감: {result.dueDate}</span>}
-          {result.startDateTime && <span>시작: {result.startDateTime.replace('T', ' ')}</span>}
+      );
+    }
+
+    return (
+      <div
+        key={index}
+        className="flex items-start gap-3 py-2.5 px-2 border-b border-gray-100 hover:bg-gray-50 rounded cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          checked={checkedIndexes.has(index)}
+          onChange={() => handleToggle(index)}
+          className="w-4 h-4 mt-0.5 shrink-0 cursor-pointer accent-primary"
+        />
+        <div
+          className="flex-1 min-w-0"
+          onClick={() => setEditingIndex(index)}
+        >
+          <div className="text-[13px] font-medium text-text flex items-center gap-1.5">
+            {result.title}
+            {result.status === 'COMPLETED' && (
+              <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded">완료</span>
+            )}
+            <span className="ml-auto text-[10px] text-text-secondary hover:text-primary">수정</span>
+          </div>
+          {result.description && (
+            <div className="text-[11px] text-text-secondary mt-0.5 truncate">{result.description}</div>
+          )}
+          <div className="text-[11px] text-text-secondary mt-1 flex gap-2 items-center">
+            <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px]">{categoryLabel(result.category)}</span>
+            {result.dueDate && <span>마감: {result.dueDate}</span>}
+            {result.startDateTime && <span>시작: {result.startDateTime.replace('T', ' ')}</span>}
+          </div>
         </div>
       </div>
-    </label>
-  );
+    );
+  };
 
   const footer = (
     <div className="flex justify-between items-center">
@@ -102,7 +207,7 @@ export default function ParseResultModal({
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="AI 추출 결과" width="w-[460px]" footer={footer}>
+    <Modal isOpen={isOpen} onClose={onClose} title="AI 추출 결과" width="w-[520px]" footer={footer}>
       {workItems.length > 0 && (
         <div>
           <div className="text-[13px] font-semibold text-text mb-1.5 pb-1 border-b border-border">
