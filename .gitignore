@@ -44,6 +44,8 @@ frontend/.vite/
 
 ### Markdown ###
 *.md
+!CLAUDE.md
+!backend/ERD.md
 !.claude/roles/*.md
 !.claude/tasks/*.md
 
