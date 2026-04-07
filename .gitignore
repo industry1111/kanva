@@ -38,10 +38,14 @@ out/
 frontend/.vite/
 
 ### Claude ###
-.claude/
+.claude/*
+!.claude/roles/
+!.claude/tasks/
 
 ### Markdown ###
 *.md
+!.claude/roles/*.md
+!.claude/tasks/*.md
 
 ### Local Config (sensitive) ###
 **/application-local.properties
